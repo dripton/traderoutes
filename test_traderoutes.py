@@ -331,3 +331,46 @@ def test_effective_passenger_btn(spin, dene):
     assert vinorian.effective_passenger_btn(nutema) == 6.5
     assert nutema.effective_passenger_btn(margesi) == 5.5
     assert margesi.effective_passenger_btn(saarinen) == 5.5
+
+
+@pytest.fixture(scope="session")
+def xboat_routes(tempdir, spin, dene):
+    spin.parse_xml_routes(tempdir)
+    dene.parse_xml_routes(tempdir)
+
+
+def test_xboat_routes(spin, dene, xboat_routes):
+    aramis = spin.hex_to_world["3110"]
+    ldd = spin.hex_to_world["3010"]
+    natoko = spin.hex_to_world["3209"]
+    reacher = spin.hex_to_world["3210"]
+    vinorian = spin.hex_to_world["3111"]
+    nutema = spin.hex_to_world["3112"]
+    margesi = spin.hex_to_world["3212"]
+    saarinen = dene.hex_to_world["0113"]
+    corfu = spin.hex_to_world["2602"]
+    lablon = spin.hex_to_world["2701"]
+    junidy = spin.hex_to_world["3202"]
+    marz = dene.hex_to_world["0201"]
+    regina = spin.hex_to_world["1910"]
+    celepina = spin.hex_to_world["2913"]
+    teh = dene.hex_to_world["0208"]
+    fennec = dene.hex_to_world["0311"]
+    ash = dene.hex_to_world["0504"]
+    roup = spin.hex_to_world["2007"]
+    jenghe = spin.hex_to_world["1810"]
+    dinomn = spin.hex_to_world["1912"]
+    towers = spin.hex_to_world["3103"]
+    assert aramis.xboat_routes == {ldd, natoko}
+    assert ldd.xboat_routes == {aramis, celepina}
+    assert natoko.xboat_routes == {aramis, teh}
+    assert not reacher.xboat_routes
+    assert not vinorian.xboat_routes
+    assert not nutema.xboat_routes
+    assert margesi.xboat_routes == {celepina, fennec}
+    assert not saarinen.xboat_routes
+    assert not corfu.xboat_routes
+    assert not lablon.xboat_routes
+    assert junidy.xboat_routes == {marz, towers}
+    assert marz.xboat_routes == {junidy, ash}
+    assert regina.xboat_routes == {roup, jenghe, dinomn}

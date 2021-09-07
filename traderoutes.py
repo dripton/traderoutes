@@ -10,7 +10,7 @@ import math
 import os
 import shutil
 import tempfile
-from typing import Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -45,6 +45,10 @@ tech_level_traveller_to_gurps = {
     15: 12,
     16: 13,
 }
+
+
+# Global to allow any sector to find other sectors
+location_to_sector = {}  # type: Dict[Tuple[int, int], Sector]
 
 
 def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
@@ -111,6 +115,7 @@ class World:
     worlds: int
     allegiance: str
     stars: List[str]
+    xboat_routes: Set[Any]  # Should be Set[World]
 
     def __init__(
         self,
@@ -122,6 +127,7 @@ class World:
         self.bases = set()
         self.stars = []
         self.trade_classifications = set()
+        self.xboat_routes = set()
         for field, (start, end) in field_to_start_end.items():
             value = line[start:end]
             if field == "Hex":
@@ -164,6 +170,12 @@ class World:
                     else:
                         self.stars.append(star + " " + stars[ii + 1])
                         ii += 2
+
+    def __str__(self):
+        return "World: " + self.name
+
+    def __repr__(self):
+        return "World: " + self.name
 
     @property
     def starport(self) -> str:
@@ -377,39 +389,71 @@ class Sector:
         self.allegiance_code_to_name = {}
         self.hex_to_world = {}
 
-        # Parse the XML metadata file
+        self.parse_xml_metadata(data_dir, sector_name)
+        self.parse_column_data(data_dir, sector_name)
+
+    def __str__(self):
+        return "Sector: " + self.name
+
+    def __repr__(self):
+        return "Sector: " + self.name
+
+    def parse_xml_metadata(self, data_dir: str, sector_name: str):
         xml_path = os.path.join(data_dir, sector_name + ".xml")
         tree = ET.parse(xml_path)
         root_element = tree.getroot()
         self.abbreviation = root_element.attrib["Abbreviation"]
-        x = int(root_element.find("X").text)
-        y = int(root_element.find("Y").text)
+        x = 9999
+        x_element = root_element.find("X")
+        if x_element is not None:
+            x_text = x_element.text
+            if x_text:
+                x = int(x_text)
+        y = 9999
+        y_element = root_element.find("Y")
+        if y_element is not None:
+            y_text = y_element.text
+            if y_text:
+                y = int(y_text)
         self.location = (x, y)
         name_elements = root_element.findall("Name")
         for name_element in name_elements:
             if "Lang" not in name_element.attrib:
-                self.names.append(name_element.text)
+                if name_element.text:
+                    self.names.append(name_element.text)
             else:
-                self.names.append(
-                    name_element.text
-                    + " ("
-                    + name_element.attrib["Lang"]
-                    + ")"
-                )
+                if name_element.text:
+                    self.names.append(
+                        name_element.text
+                        + " ("
+                        + name_element.attrib["Lang"]
+                        + ")"
+                    )
         subsectors_element = root_element.find("Subsectors")
-        for subsector_element in subsectors_element.findall("Subsector"):
-            letter = subsector_element.attrib["Index"]
-            subsector_name = subsector_element.text
-            self.subsector_letter_to_name[letter] = subsector_name
+        if subsectors_element:
+            for subsector_element in subsectors_element.findall("Subsector"):
+                letter = subsector_element.attrib.get("Index")
+                subsector_name = subsector_element.text
+                if letter and subsector_name:
+                    self.subsector_letter_to_name[letter] = subsector_name
         allegiances_element = root_element.find("Allegiances")
-        for allegiance_element in allegiances_element.findall("Allegiance"):
-            allegiance_code = allegiance_element.attrib["Code"]
-            allegiance_name = allegiance_element.text
-            self.allegiance_code_to_name[allegiance_code] = allegiance_name
+        if allegiances_element:
+            for allegiance_element in allegiances_element.findall(
+                "Allegiance"
+            ):
+                allegiance_code = allegiance_element.attrib["Code"]
+                allegiance_name = allegiance_element.text
+                if allegiance_name:
+                    self.allegiance_code_to_name[
+                        allegiance_code
+                    ] = allegiance_name
+        global location_to_sector
+        # Set this last after the sector is as fully built as possible.
+        location_to_sector[self.location] = self
 
-        # Parse the column delimited data file
-        path = os.path.join(data_dir, sector_name)
-        with open(path) as fil:
+    def parse_column_data(self, data_dir: str, sector_name: str):
+        data_path = os.path.join(data_dir, sector_name)
+        with open(data_path) as fil:
             for line in fil:
                 line = line.strip()
                 if not line:
@@ -424,6 +468,43 @@ class Sector:
                 else:
                     world = World(line, fields, self)
                     self.hex_to_world[world.hex_] = world
+
+    def parse_xml_routes(self, data_dir: str):
+        """Must be called after all Sectors and Worlds are otherwise built."""
+        xml_path = os.path.join(data_dir, self.name + ".xml")
+        tree = ET.parse(xml_path)
+        root_element = tree.getroot()
+        routes_element = root_element.find("Routes")
+        if not routes_element:
+            return
+        for route_element in routes_element.findall("Route"):
+            start_hex = route_element.attrib["Start"]
+            end_hex = route_element.attrib["End"]
+            start_offset_x = route_element.attrib.get("StartOffsetX", 0)
+            start_offset_x = int(start_offset_x)
+            start_offset_y = route_element.attrib.get("StartOffsetY", 0)
+            start_offset_y = int(start_offset_y)
+            end_offset_x = route_element.attrib.get("EndOffsetX", 0)
+            end_offset_x = int(end_offset_x)
+            end_offset_y = route_element.attrib.get("EndOffsetY", 0)
+            end_offset_y = int(end_offset_y)
+            start_sector = location_to_sector.get(
+                (
+                    self.location[0] + start_offset_x,
+                    self.location[1] + start_offset_y,
+                )
+            )
+            end_sector = location_to_sector.get(
+                (
+                    self.location[0] + end_offset_x,
+                    self.location[1] + end_offset_y,
+                )
+            )
+            if start_sector is not None and end_sector is not None:
+                start_world = start_sector.hex_to_world[start_hex]
+                end_world = end_sector.hex_to_world[end_hex]
+                start_world.xboat_routes.add(end_world)
+                end_world.xboat_routes.add(start_world)
 
     @property
     def name(self):
@@ -454,10 +535,10 @@ def main():
         tempdir = tempfile.mkdtemp(prefix="traderoutes.py")
         data_dir = tempdir
     download_sector_data(data_dir, args.sector_names)
-    location_to_sector = {}  # type: Dict[Tuple[int, int], Sector]
     for sector_name in args.sector_names:
         sector = Sector(data_dir, sector_name)
-        location_to_sector[sector.location] = sector
+    for sector in location_to_sector.values():
+        sector.parse_xml_routes(data_dir)
 
     if tempdir is not None:
         shutil.rmtree(tempdir)
