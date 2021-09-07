@@ -2,6 +2,7 @@
 
 """Calculate trade routes for GURPS Traveller: Far Trader"""
 
+# Needed for circular class references in mypy.
 from __future__ import annotations
 
 import argparse
