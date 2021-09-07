@@ -7,13 +7,23 @@ for free distribution, and not for resale, under the permissions granted in the
 <a href="http://www.sjgames.com/general/online_policy.html">Steve Jackson Games
 Online Policy</a>.
 
-Traveller is a trademark of Marc Miller and Far Future Enterprises.
+The Traveller game in all forms is owned by Far Future Enterprises. Copyright
+1977 - 2021 Far Future Enterprises. Traveller is a registered trademark of Far
+Future Enterprises. Far Future permits web sites and fanzines for this game,
+provided it contains this notice, that Far Future is notified, and subject to a
+withdrawal of permission on 90 days notice. The contents of this site are for
+personal, non-commercial use only. Any use of Far Future Enterprises's
+copyrighted material or trademarks anywhere on this web site and its files
+should not be viewed as a challenge to those copyrights.  This program is
+intended to comply with FFE's fair use policy at
+https://www.farfuture.net/FFEFairUsePolicy2008.pdf
 
-This program is intended to comply with Steve Jackson Games' online policy,
-which is incompatible with Open Source licenses (because they allow selling
-while the SJ Games Online Policy only allows giving away for free.)  So I have
-to use a custom license.  It's based on the MIT license, but slightly modified
-to disallow selling the program:
+Steve Jackson Games' online policy and Far Future Enterprises' Fair Use policy
+are incompatible with open source licenses, because open source licenses allow
+selling while the SJ Games Online Policy and FFE Fair Use Policy only allow
+giving away for free.  So I have to use a custom license.  It's based on the
+MIT license, but slightly modified to disallow selling the program:
+
 
 Copyright (c) 2021 David Ripton
 
