@@ -12,6 +12,7 @@ import tempfile
 from typing import Dict, List, Set, Tuple
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 
 
 starport_traveller_to_gurps = {
@@ -48,12 +49,20 @@ tech_level_traveller_to_gurps = {
 def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
     for sector in sector_names:
         data_path = os.path.join(data_dir, sector)
+        sector_xml_filename = sector + ".xml"
+        metadata_path = os.path.join(data_dir, sector_xml_filename)
+        escaped_sector = urllib.parse.quote(sector)
         if not os.path.exists(data_path):
-            escaped_sector = urllib.parse.quote(sector)
             url = f"https://travellermap.com/data/{escaped_sector}"
             response = urllib.request.urlopen(url)
             data = response.read()
             with open(data_path, "wb") as fil:
+                fil.write(data)
+        if not os.path.exists(metadata_path):
+            url = f"https://travellermap.com/data/{escaped_sector}/metadata"
+            response = urllib.request.urlopen(url)
+            data = response.read()
+            with open(metadata_path, "wb") as fil:
                 fil.write(data)
 
 
@@ -75,12 +84,12 @@ def parse_header_and_separator(
     return field_to_start_end
 
 
-def same_allegience(allegience1: str, allegience2: str) -> bool:
-    if allegience1 != allegience2:
+def same_allegiance(allegiance1: str, allegiance2: str) -> bool:
+    if allegiance1 != allegiance2:
         return False
-    if allegience1.startswith("Na") or allegience1.startswith("Cs"):
+    if allegiance1.startswith("Na") or allegiance1.startswith("Cs"):
         # non-aligned worlds and client states with the same code are not
-        # necessarily the same allegience
+        # necessarily the same allegiance
         return False
     return True
 
@@ -99,7 +108,7 @@ class World:
     zone: str
     pbg: str
     worlds: int
-    allegience: str
+    allegiance: str
     stars: List[str]
 
     def __init__(
@@ -142,7 +151,7 @@ class World:
             elif field == "W":
                 self.worlds = int(value.strip())
             elif field == "A":
-                self.allegience = value
+                self.allegiance = value
             elif field == "Stellar":
                 stars = value.strip().split()
                 ii = 0
@@ -281,7 +290,7 @@ class World:
         elif "In" in other.trade_classifications:
             if "Ni" in self.trade_classifications:
                 result += 0.5
-        if not same_allegience(self.allegience, other.allegience):
+        if not same_allegiance(self.allegiance, other.allegiance):
             result -= 0.5
         return result
 
@@ -354,46 +363,56 @@ class World:
 
 
 class Sector:
-    name: str
     names: List[str]
     abbreviation: str
     location: Tuple[int, int]
     subsector_letter_to_name: Dict[str, str]
-    allegience_abbrev_to_name: Dict[str, str]
+    allegiance_code_to_name: Dict[str, str]
     hex_to_world: Dict[str, World]
 
     def __init__(self, data_dir: str, sector_name: str) -> None:
         self.names = []
         self.subsector_letter_to_name = {}
-        self.allegience_abbrev_to_name = {}
+        self.allegiance_code_to_name = {}
         self.hex_to_world = {}
 
+        # Parse the XML metadata file
+        xml_path = os.path.join(data_dir, sector_name + ".xml")
+        tree = ET.parse(xml_path)
+        root_element = tree.getroot()
+        self.abbreviation = root_element.attrib["Abbreviation"]
+        x = int(root_element.find("X").text)
+        y = int(root_element.find("Y").text)
+        self.location = (x, y)
+        name_elements = root_element.findall("Name")
+        for name_element in name_elements:
+            if "Lang" not in name_element.attrib:
+                self.names.append(name_element.text)
+            else:
+                self.names.append(
+                    name_element.text
+                    + " ("
+                    + name_element.attrib["Lang"]
+                    + ")"
+                )
+        subsectors_element = root_element.find("Subsectors")
+        for subsector_element in subsectors_element.findall("Subsector"):
+            letter = subsector_element.attrib["Index"]
+            subsector_name = subsector_element.text
+            self.subsector_letter_to_name[letter] = subsector_name
+        allegiances_element = root_element.find("Allegiances")
+        for allegiance_element in allegiances_element.findall("Allegiance"):
+            allegiance_code = allegiance_element.attrib["Code"]
+            allegiance_name = allegiance_element.text
+            self.allegiance_code_to_name[allegiance_code] = allegiance_name
+
+        # Parse the column delimited data file
         path = os.path.join(data_dir, sector_name)
         with open(path) as fil:
-            for ii, line in enumerate(fil):
+            for line in fil:
                 line = line.strip()
                 if not line:
                     continue
-                elif ii == 4:  # location line
-                    line = line.strip("#")
-                    line = line.strip()
-                    str_coords = line.split(",")
-                    coords = [int(str_coord) for str_coord in str_coords]
-                    self.location = (coords[0], coords[1])
-                elif line.startswith("# Name: "):
-                    self.names.append(line[8:])
-                elif line.startswith("# Abbreviation: "):
-                    self.abbreviation = line[16:]
-                elif line.startswith("# Subsector "):
-                    letter = line[12]
-                    subsector_name = line[15:]
-                    self.subsector_letter_to_name[letter] = subsector_name
-                elif line.startswith("# Alleg: "):
-                    alleg_str = line[9:]
-                    abbrev, rest = alleg_str.split(":", 1)
-                    rest = rest.strip()
-                    allegience_name = rest.strip('"')
-                    self.allegience_abbrev_to_name[abbrev] = allegience_name
                 elif line.startswith("#"):
                     continue
                 elif line.startswith("Hex"):

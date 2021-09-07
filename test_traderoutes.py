@@ -25,7 +25,11 @@ def download(tempdir):
 
 def test_download_sector_data(tempdir, download):
     sector_names = ["Deneb", "Spinward Marches"]
-    assert sorted(os.listdir(tempdir)) == sector_names
+    all_filenames = []
+    for sector_name in sector_names:
+        all_filenames.append(sector_name)
+        all_filenames.append(sector_name + ".xml")
+    assert sorted(os.listdir(tempdir)) == all_filenames
     for filename in os.listdir(tempdir):
         path = os.path.join(tempdir, filename)
         stat_tuple = os.stat(path)
@@ -61,19 +65,19 @@ def test_parse_header_and_separator():
     assert fields["Stellar"] == (122, 136)
 
 
-def test_same_allegience():
-    assert not tr.same_allegience("CsIm", "CsIm")
-    assert not tr.same_allegience("CsZh", "CsZh")
-    assert not tr.same_allegience("CsIm", "CsZh")
-    assert not tr.same_allegience("NaHu", "NaHu")
-    assert not tr.same_allegience("NaXX", "NaXX")
-    assert not tr.same_allegience("NaHu", "NaXX")
-    assert not tr.same_allegience("DaCf", "ImDd")
-    assert not tr.same_allegience("ImDd", "ZhIN")
-    assert tr.same_allegience("DaCf", "DaCf")
-    assert tr.same_allegience("ImDd", "ImDd")
-    assert tr.same_allegience("SwCf", "SwCf")
-    assert tr.same_allegience("ZhIN", "ZhIN")
+def test_same_allegiance():
+    assert not tr.same_allegiance("CsIm", "CsIm")
+    assert not tr.same_allegiance("CsZh", "CsZh")
+    assert not tr.same_allegiance("CsIm", "CsZh")
+    assert not tr.same_allegiance("NaHu", "NaHu")
+    assert not tr.same_allegiance("NaXX", "NaXX")
+    assert not tr.same_allegiance("NaHu", "NaXX")
+    assert not tr.same_allegiance("DaCf", "ImDd")
+    assert not tr.same_allegiance("ImDd", "ZhIN")
+    assert tr.same_allegiance("DaCf", "DaCf")
+    assert tr.same_allegiance("ImDd", "ImDd")
+    assert tr.same_allegiance("SwCf", "SwCf")
+    assert tr.same_allegiance("ZhIN", "ZhIN")
 
 
 @pytest.fixture(scope="session")
@@ -87,13 +91,13 @@ def test_sector_spin(spin):
     assert sector.name == "Spinward Marches"
     assert sector.names == ["Spinward Marches", "Tloql (zh)"]
     assert sector.abbreviation == "Spin"
-    assert sector.location == (-4, 1)
+    assert sector.location == (-4, -1)
     assert len(sector.subsector_letter_to_name) == 16
     assert sector.subsector_letter_to_name["A"] == "Cronor"
     assert sector.subsector_letter_to_name["P"] == "Trin's Veil"
-    assert len(sector.allegience_abbrev_to_name) == 8
+    assert len(sector.allegiance_code_to_name) == 8
     assert (
-        sector.allegience_abbrev_to_name["CsIm"]
+        sector.allegiance_code_to_name["CsIm"]
         == "Client state, Third Imperium"
     )
     assert len(sector.hex_to_world) == 439
@@ -112,13 +116,13 @@ def test_sector_dene(dene):
     assert sector.name == "Deneb"
     assert sector.names == ["Deneb", "Nieklsdia (zh)"]
     assert sector.abbreviation == "Dene"
-    assert sector.location == (-3, 1)
+    assert sector.location == (-3, -1)
     assert len(sector.subsector_letter_to_name) == 16
     assert sector.subsector_letter_to_name["A"] == "Pretoria"
     assert sector.subsector_letter_to_name["P"] == "Vast Heavens"
-    assert len(sector.allegience_abbrev_to_name) == 6
+    assert len(sector.allegiance_code_to_name) == 6
     assert (
-        sector.allegience_abbrev_to_name["CsIm"]
+        sector.allegiance_code_to_name["CsIm"]
         == "Client state, Third Imperium"
     )
     assert len(sector.hex_to_world) == 386
@@ -142,7 +146,7 @@ def test_world_aramis(spin):
     assert world.zone == "G"
     assert world.pbg == "710"
     assert world.worlds == 9
-    assert world.allegience == "ImDd"
+    assert world.allegiance == "ImDd"
     assert world.stars == ["M2 V"]
     assert world.starport == "A"
     assert world.g_starport == "V"
@@ -185,7 +189,7 @@ def test_world_regina(spin):
     assert world.zone == "G"
     assert world.pbg == "703"
     assert world.worlds == 8
-    assert world.allegience == "ImDd"
+    assert world.allegiance == "ImDd"
     assert world.stars == ["F7 V", "BD", "M3 V"]
     assert world.starport == "A"
     assert world.g_starport == "V"
@@ -212,15 +216,15 @@ def test_abs_coords(spin, dene):
     margesi = spin.hex_to_world["3212"]
     saarinen = dene.hex_to_world["0113"]
     regina = spin.hex_to_world["1910"]
-    assert aramis.abs_coords() == (-97, 50)
-    assert ldd.abs_coords() == (-98, 50.5)
-    assert natoko.abs_coords() == (-96, 49.5)
-    assert reacher.abs_coords() == (-96, 50.5)
-    assert vinorian.abs_coords() == (-97, 51)
-    assert nutema.abs_coords() == (-97, 52)
-    assert margesi.abs_coords() == (-96, 52.5)
-    assert saarinen.abs_coords() == (-95, 53)
-    assert regina.abs_coords() == (-109, 50)
+    assert aramis.abs_coords() == (-97, -30)
+    assert ldd.abs_coords() == (-98, -29.5)
+    assert natoko.abs_coords() == (-96, -30.5)
+    assert reacher.abs_coords() == (-96, -29.5)
+    assert vinorian.abs_coords() == (-97, -29)
+    assert nutema.abs_coords() == (-97, -28)
+    assert margesi.abs_coords() == (-96, -27.5)
+    assert saarinen.abs_coords() == (-95, -27)
+    assert regina.abs_coords() == (-109, -30)
 
 
 def test_straight_line_distance(spin, dene):
