@@ -105,6 +105,15 @@ def same_allegiance(allegiance1: str, allegiance2: str) -> bool:
     return True
 
 
+def worlds_by_wtn() -> List[Tuple[float, World]]:
+    wtn_worlds = []
+    for world in abs_coords_to_world.values():
+        wtn_worlds.append((world.wtn, world))
+    wtn_worlds.sort()
+    wtn_worlds.reverse()
+    return wtn_worlds
+
+
 class World:
     sector: Sector
     hex_: str

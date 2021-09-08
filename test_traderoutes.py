@@ -522,3 +522,10 @@ def test_navigable_distance(spin, dene, neighbors):
     assert aramis.navigable_distance(ldd) == 1
     assert aramis.navigable_distance(corfu) == 16
     assert reno.navigable_distance(javan) == 61
+
+
+def test_worlds_by_wtn(spin, dene):
+    wtn_worlds = tr.worlds_by_wtn()
+    assert len(wtn_worlds) == 825
+    assert wtn_worlds[0][0] == 6.5
+    assert wtn_worlds[-1][0] == -0.5
