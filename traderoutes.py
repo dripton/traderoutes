@@ -271,7 +271,7 @@ class World:
 
     @property
     def g_tech_level(self) -> int:
-        tech_level_int = int(self.tech_level, 16)
+        tech_level_int = int(self.tech_level, 17)
         return tech_level_traveller_to_gurps[tech_level_int]
 
     @property
