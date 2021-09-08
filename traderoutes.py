@@ -380,10 +380,9 @@ class World:
         return math.floor(xdelta + ydelta)
 
     def navigable_distance(self, other: World) -> int:
-        """Return the navigable distance in hexes between the worlds
-
-        This uses jump-4 only along Xboat routes, and jump-2 otherwise.
-        """
+        """Return the navigable distance in hexes between the worlds"""
+        # TODO Maybe this should return None instead of maxsize if there's
+        # no path?
         path = self.navigable_path(other)
         if path is None:
             return maxsize
@@ -396,6 +395,8 @@ class World:
 
     def navigable_path(self, goal: World) -> Optional[List[World]]:
         """Return the shortest navigable path from self to goal.
+
+        This uses jump-4 only along Xboat routes, and jump-2 otherwise.
 
         If it's not reachable, return None.
         """
