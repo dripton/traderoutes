@@ -6,11 +6,14 @@
 from __future__ import annotations
 
 import argparse
+from collections import defaultdict
+import heapq
 import math
 import os
 import shutil
+from sys import maxsize
 import tempfile
-from typing import Any, Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -49,6 +52,9 @@ tech_level_traveller_to_gurps = {
 
 # Global to allow any sector to find other sectors
 location_to_sector = {}  # type: Dict[Tuple[int, int], Sector]
+
+# Global to allow any world to find other worlds
+abs_coords_to_world = {}
 
 
 def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
@@ -115,7 +121,10 @@ class World:
     worlds: int
     allegiance: str
     stars: List[str]
-    xboat_routes: Set[Any]  # Should be Set[World]
+    xboat_routes: Set[World]
+    neighbors1: Set[World]
+    neighbors2: Set[World]
+    neighbors3: Set[World]
 
     def __init__(
         self,
@@ -128,6 +137,9 @@ class World:
         self.stars = []
         self.trade_classifications = set()
         self.xboat_routes = set()
+        self.neighbors1 = set()
+        self.neighbors2 = set()
+        self.neighbors3 = set()
         for field, (start, end) in field_to_start_end.items():
             value = line[start:end]
             if field == "Hex":
@@ -170,12 +182,56 @@ class World:
                     else:
                         self.stars.append(star + " " + stars[ii + 1])
                         ii += 2
+        global abs_coords_to_world
+        abs_coords_to_world[self.abs_coords] = self
 
-    def __str__(self):
+    def populate_neighbors(self) -> None:
+        """Find and cache all neighbors within 3 hexes.
+
+        This must be run after all Sectors and Worlds are mostly initialized.
+        """
+        (x, y) = self.abs_coords
+        xx = x - 3
+        while xx <= x + 3:
+            yy = y - 3
+            while yy <= y + 3:
+                world = abs_coords_to_world.get((xx, yy))
+                if world is not None and world != self:
+                    distance = self.straight_line_distance(world)
+                    if distance == 1:
+                        self.neighbors1.add(world)
+                    elif distance == 2:
+                        self.neighbors2.add(world)
+                    elif distance == 3:
+                        self.neighbors3.add(world)
+                yy += 0.5
+            xx += 1
+
+    def __str__(self) -> str:
         return "World: " + self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "World: " + self.name
+
+    def __eq__(self, other):
+        x1, y1 = self.abs_coords
+        x2, y2 = other.abs_coords
+        return x1 == x2 and y1 == y2
+
+    def __hash__(self):
+        x1, y1 = self.abs_coords
+        return hash(x1) + hash(y1)
+
+    # Impose consistent ordering to make paths predictable.
+    def __lt__(self, other):
+        x1, y1 = self.abs_coords
+        x2, y2 = other.abs_coords
+        if x1 < x2:
+            return True
+        elif y1 < y2:
+            return True
+        else:
+            return False
 
     @property
     def starport(self) -> str:
@@ -307,6 +363,7 @@ class World:
             result -= 0.5
         return result
 
+    @property
     def abs_coords(self) -> Tuple[float, float]:
         hex_ = self.hex_
         location = self.sector.location
@@ -316,16 +373,71 @@ class World:
 
     def straight_line_distance(self, other: World) -> int:
         """Return the shortest distance in hexes between the worlds"""
-        (x1, y1) = self.abs_coords()
-        (x2, y2) = other.abs_coords()
+        (x1, y1) = self.abs_coords
+        (x2, y2) = other.abs_coords
         xdelta = abs(x2 - x1)
         ydelta = max(0, abs(y2 - y1) - xdelta / 2)
         return math.floor(xdelta + ydelta)
 
+    def navigable_distance(self, other: World) -> int:
+        """Return the navigable distance in hexes between the worlds
+
+        This uses jump-4 only along Xboat routes, and jump-2 otherwise.
+        """
+        path = self.navigable_path(other)
+        if path is None:
+            return maxsize
+        total = 0
+        world = self
+        for world2 in path:
+            total += world.straight_line_distance(world2)
+            world = world2
+        return total
+
+    def navigable_path(self, goal: World) -> Optional[List[World]]:
+        """Return the shortest navigable path from self to goal.
+
+        If it's not reachable, return None.
+        """
+        openheap = []  # type: List[Tuple[int, World]]
+        openset = set()  # type: Set[World]
+        came_from = {}  # type: Dict[World, World]
+        g_scores = defaultdict(lambda: maxsize)  # type: Dict[World, int]
+        g_scores[self] = 0
+        f_scores = defaultdict(lambda: maxsize)  # type: Dict[World, int]
+        f_scores[self] = self.straight_line_distance(goal)
+        heapq.heappush(openheap, ((f_scores[self], self)))
+        openset.add(self)
+        while openheap:
+            (f_score, current) = heapq.heappop(openheap)
+            openset.remove(current)
+            if current == goal:
+                total_path = [current]
+                while current in came_from:
+                    current = came_from[current]
+                    total_path.append(current)
+                total_path.pop()
+                total_path.reverse()
+                print(total_path)
+                return total_path
+            for neighbor in current.neighbors1.union(current.neighbors2).union(
+                current.xboat_routes
+            ):
+                sld = current.straight_line_distance(neighbor)
+                tentative_g_score = g_scores[current] + sld
+                if tentative_g_score < g_scores[neighbor]:
+                    came_from[neighbor] = current
+                    g_scores[neighbor] = tentative_g_score
+                    f_scores[neighbor] = tentative_g_score + sld
+                    if neighbor not in openset:
+                        heapq.heappush(
+                            openheap, (f_scores[neighbor], neighbor)
+                        )
+                        openset.add(neighbor)
+        return None
+
     def distance_modifier(self, other: World) -> float:
-        # TODO This should be navigable distance
-        # jump-4 along Xboat routes, jump-2 otherwise
-        distance = self.straight_line_distance(other)
+        distance = self.navigable_distance(other)
         if distance <= 1:
             return 0.0
         elif distance <= 2:
@@ -392,10 +504,10 @@ class Sector:
         self.parse_xml_metadata(data_dir, sector_name)
         self.parse_column_data(data_dir, sector_name)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Sector: " + self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Sector: " + self.name
 
     def parse_xml_metadata(self, data_dir: str, sector_name: str):
@@ -403,13 +515,13 @@ class Sector:
         tree = ET.parse(xml_path)
         root_element = tree.getroot()
         self.abbreviation = root_element.attrib["Abbreviation"]
-        x = 9999
+        x = maxsize
         x_element = root_element.find("X")
         if x_element is not None:
             x_text = x_element.text
             if x_text:
                 x = int(x_text)
-        y = 9999
+        y = maxsize
         y_element = root_element.find("Y")
         if y_element is not None:
             y_text = y_element.text
@@ -506,6 +618,10 @@ class Sector:
                 start_world.xboat_routes.add(end_world)
                 end_world.xboat_routes.add(start_world)
 
+    def populate_neighbors(self):
+        for world in self.hex_to_world.values():
+            world.populate_neighbors()
+
     @property
     def name(self):
         return self.names[0]
@@ -539,6 +655,7 @@ def main():
         sector = Sector(data_dir, sector_name)
     for sector in location_to_sector.values():
         sector.parse_xml_routes(data_dir)
+        sector.populate_neighbors()
 
     if tempdir is not None:
         shutil.rmtree(tempdir)

@@ -216,15 +216,15 @@ def test_abs_coords(spin, dene):
     margesi = spin.hex_to_world["3212"]
     saarinen = dene.hex_to_world["0113"]
     regina = spin.hex_to_world["1910"]
-    assert aramis.abs_coords() == (-97, -30)
-    assert ldd.abs_coords() == (-98, -29.5)
-    assert natoko.abs_coords() == (-96, -30.5)
-    assert reacher.abs_coords() == (-96, -29.5)
-    assert vinorian.abs_coords() == (-97, -29)
-    assert nutema.abs_coords() == (-97, -28)
-    assert margesi.abs_coords() == (-96, -27.5)
-    assert saarinen.abs_coords() == (-95, -27)
-    assert regina.abs_coords() == (-109, -30)
+    assert aramis.abs_coords == (-97, -30)
+    assert ldd.abs_coords == (-98, -29.5)
+    assert natoko.abs_coords == (-96, -30.5)
+    assert reacher.abs_coords == (-96, -29.5)
+    assert vinorian.abs_coords == (-97, -29)
+    assert nutema.abs_coords == (-97, -28)
+    assert margesi.abs_coords == (-96, -27.5)
+    assert saarinen.abs_coords == (-95, -27)
+    assert regina.abs_coords == (-109, -30)
 
 
 def test_straight_line_distance(spin, dene):
@@ -263,7 +263,7 @@ def test_straight_line_distance(spin, dene):
     assert aramis.straight_line_distance(regina) == 12
 
 
-def test_btn(spin, dene):
+def test_btn(spin, dene, neighbors):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -283,7 +283,7 @@ def test_btn(spin, dene):
     assert aramis.btn(vinorian) == 8
     assert aramis.btn(corfu) == 5.5
     assert aramis.btn(lablon) == 6
-    assert aramis.btn(junidy) == 8
+    assert aramis.btn(junidy) == 7.5
     assert aramis.btn(marz) == 7.5
     assert aramis.btn(regina) == 7
     assert ldd.btn(aramis) == 8
@@ -298,7 +298,7 @@ def test_btn(spin, dene):
     assert margesi.btn(saarinen) == 5.5
 
 
-def test_effective_passenger_btn(spin, dene):
+def test_effective_passenger_btn(spin, dene, neighbors):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -318,7 +318,7 @@ def test_effective_passenger_btn(spin, dene):
     assert aramis.effective_passenger_btn(vinorian) == 8.5
     assert aramis.effective_passenger_btn(corfu) == 6
     assert aramis.effective_passenger_btn(lablon) == 6.5
-    assert aramis.effective_passenger_btn(junidy) == 8.5
+    assert aramis.effective_passenger_btn(junidy) == 8
     assert aramis.effective_passenger_btn(marz) == 8
     assert aramis.effective_passenger_btn(regina) == 8.5
     assert ldd.effective_passenger_btn(aramis) == 8.5
@@ -374,3 +374,151 @@ def test_xboat_routes(spin, dene, xboat_routes):
     assert junidy.xboat_routes == {marz, towers}
     assert marz.xboat_routes == {junidy, ash}
     assert regina.xboat_routes == {roup, jenghe, dinomn}
+
+
+@pytest.fixture(scope="session")
+def neighbors(tempdir, spin, dene):
+    spin.populate_neighbors()
+    dene.populate_neighbors()
+
+
+def test_neighbors(spin, dene, neighbors):
+    aramis = spin.hex_to_world["3110"]
+    ldd = spin.hex_to_world["3010"]
+    natoko = spin.hex_to_world["3209"]
+    reacher = spin.hex_to_world["3210"]
+    vinorian = spin.hex_to_world["3111"]
+    nutema = spin.hex_to_world["3112"]
+    margesi = spin.hex_to_world["3212"]
+    saarinen = dene.hex_to_world["0113"]
+    corfu = spin.hex_to_world["2602"]
+    lablon = spin.hex_to_world["2701"]
+    junidy = spin.hex_to_world["3202"]
+    marz = dene.hex_to_world["0201"]
+    regina = spin.hex_to_world["1910"]
+    celepina = spin.hex_to_world["2913"]
+    teh = dene.hex_to_world["0208"]
+    fennec = dene.hex_to_world["0311"]
+    ash = dene.hex_to_world["0504"]
+    roup = spin.hex_to_world["2007"]
+    jenghe = spin.hex_to_world["1810"]
+    dinomn = spin.hex_to_world["1912"]
+    towers = spin.hex_to_world["3103"]
+    pysadi = spin.hex_to_world["3008"]
+    zila = spin.hex_to_world["2908"]
+    lewis = spin.hex_to_world["3107"]
+    patinir = spin.hex_to_world["3207"]
+    henoz = spin.hex_to_world["2912"]
+    valhalla = spin.hex_to_world["2811"]
+    suvfoto = dene.hex_to_world["0211"]
+    kretikaa = dene.hex_to_world["0209"]
+    new_ramma = dene.hex_to_world["0108"]
+    assert aramis.neighbors1 == {ldd, natoko, reacher, vinorian}
+    assert aramis.neighbors2 == {nutema, pysadi}
+    assert aramis.neighbors3 == {
+        margesi,
+        teh,
+        zila,
+        lewis,
+        patinir,
+        henoz,
+        suvfoto,
+        kretikaa,
+        new_ramma,
+        valhalla,
+    }
+
+
+def test_navigable_path(spin, dene, neighbors):
+    aramis = spin.hex_to_world["3110"]
+    ldd = spin.hex_to_world["3010"]
+    natoko = spin.hex_to_world["3209"]
+    reacher = spin.hex_to_world["3210"]
+    vinorian = spin.hex_to_world["3111"]
+    nutema = spin.hex_to_world["3112"]
+    margesi = spin.hex_to_world["3212"]
+    saarinen = dene.hex_to_world["0113"]
+    corfu = spin.hex_to_world["2602"]
+    lablon = spin.hex_to_world["2701"]
+    junidy = spin.hex_to_world["3202"]
+    marz = dene.hex_to_world["0201"]
+    regina = spin.hex_to_world["1910"]
+    celepina = spin.hex_to_world["2913"]
+    teh = dene.hex_to_world["0208"]
+    fennec = dene.hex_to_world["0311"]
+    ash = dene.hex_to_world["0504"]
+    roup = spin.hex_to_world["2007"]
+    jenghe = spin.hex_to_world["1810"]
+    dinomn = spin.hex_to_world["1912"]
+    towers = spin.hex_to_world["3103"]
+    pysadi = spin.hex_to_world["3008"]
+    zila = spin.hex_to_world["2908"]
+    lewis = spin.hex_to_world["3107"]
+    patinir = spin.hex_to_world["3207"]
+    henoz = spin.hex_to_world["2912"]
+    valhalla = spin.hex_to_world["2811"]
+    violante = spin.hex_to_world["2708"]
+    focaline = spin.hex_to_world["2607"]
+    moughas = spin.hex_to_world["2406"]
+    keng = spin.hex_to_world["2405"]
+    becks_world = spin.hex_to_world["2204"]
+    yorbund = spin.hex_to_world["2303"]
+    heya = spin.hex_to_world["2402"]
+    suvfoto = dene.hex_to_world["0211"]
+    kretikaa = dene.hex_to_world["0209"]
+    new_ramma = dene.hex_to_world["0108"]
+    reno = spin.hex_to_world["0102"]
+    javan = dene.hex_to_world["2131"]
+    assert aramis.navigable_path(ldd) == [ldd]
+    assert aramis.navigable_path(corfu) == [
+        pysadi,
+        zila,
+        violante,
+        focaline,
+        moughas,
+        keng,
+        becks_world,
+        yorbund,
+        heya,
+        corfu,
+    ]
+    assert len(reno.navigable_path(javan)) == 33
+
+
+def test_navigable_distance(spin, dene, neighbors):
+    aramis = spin.hex_to_world["3110"]
+    ldd = spin.hex_to_world["3010"]
+    natoko = spin.hex_to_world["3209"]
+    reacher = spin.hex_to_world["3210"]
+    vinorian = spin.hex_to_world["3111"]
+    nutema = spin.hex_to_world["3112"]
+    margesi = spin.hex_to_world["3212"]
+    saarinen = dene.hex_to_world["0113"]
+    corfu = spin.hex_to_world["2602"]
+    lablon = spin.hex_to_world["2701"]
+    junidy = spin.hex_to_world["3202"]
+    marz = dene.hex_to_world["0201"]
+    regina = spin.hex_to_world["1910"]
+    celepina = spin.hex_to_world["2913"]
+    teh = dene.hex_to_world["0208"]
+    fennec = dene.hex_to_world["0311"]
+    ash = dene.hex_to_world["0504"]
+    roup = spin.hex_to_world["2007"]
+    jenghe = spin.hex_to_world["1810"]
+    dinomn = spin.hex_to_world["1912"]
+    towers = spin.hex_to_world["3103"]
+    pysadi = spin.hex_to_world["3008"]
+    zila = spin.hex_to_world["2908"]
+    lewis = spin.hex_to_world["3107"]
+    patinir = spin.hex_to_world["3207"]
+    henoz = spin.hex_to_world["2912"]
+    valhalla = spin.hex_to_world["2811"]
+    suvfoto = dene.hex_to_world["0211"]
+    kretikaa = dene.hex_to_world["0209"]
+    new_ramma = dene.hex_to_world["0108"]
+    reno = spin.hex_to_world["0102"]
+    javan = dene.hex_to_world["2131"]
+    assert aramis.navigable_distance(aramis) == 0
+    assert aramis.navigable_distance(ldd) == 1
+    assert aramis.navigable_distance(corfu) == 16
+    assert reno.navigable_distance(javan) == 61
