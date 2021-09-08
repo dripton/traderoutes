@@ -54,7 +54,7 @@ tech_level_traveller_to_gurps = {
 location_to_sector = {}  # type: Dict[Tuple[int, int], Sector]
 
 # Global to allow any world to find other worlds
-abs_coords_to_world = {}
+abs_coords_to_world = {}  # type: Dict[Tuple[float, float], World]
 
 
 def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
