@@ -264,19 +264,74 @@ def test_straight_line_distance(spin, dene):
 
 
 def test_btn(spin, dene, neighbors):
-    aramis = spin.hex_to_world["3110"]
+    paya = spin.hex_to_world["2509"]
+    dhian = spin.hex_to_world["2510"]
+    corfu = spin.hex_to_world["2602"]
+    focaline = spin.hex_to_world["2607"]
+    lablon = spin.hex_to_world["2701"]
+    heguz = spin.hex_to_world["2706"]
+    violante = spin.hex_to_world["2708"]
+    pavanne = spin.hex_to_world["2905"]
+    carsten = spin.hex_to_world["2906"]
+    zila = spin.hex_to_world["2908"]
+    jesedipere = spin.hex_to_world["3001"]
+    yebab = spin.hex_to_world["3002"]
+    nasemin = spin.hex_to_world["3003"]
+    zykoca = spin.hex_to_world["3004"]
+    aramanx = spin.hex_to_world["3004"]
+    pysadi = spin.hex_to_world["3008"]
     ldd = spin.hex_to_world["3010"]
+    rugbird = spin.hex_to_world["3102"]
+    towers = spin.hex_to_world["3103"]
+    feneteman = spin.hex_to_world["3104"]
+    lewis = spin.hex_to_world["3107"]
+    aramis = spin.hex_to_world["3110"]
+    junidy = spin.hex_to_world["3202"]
+    patinir = spin.hex_to_world["3207"]
     natoko = spin.hex_to_world["3209"]
     reacher = spin.hex_to_world["3210"]
     vinorian = spin.hex_to_world["3111"]
     nutema = spin.hex_to_world["3112"]
     margesi = spin.hex_to_world["3212"]
     saarinen = dene.hex_to_world["0113"]
-    corfu = spin.hex_to_world["2602"]
-    lablon = spin.hex_to_world["2701"]
-    junidy = spin.hex_to_world["3202"]
     marz = dene.hex_to_world["0201"]
     regina = spin.hex_to_world["1910"]
+    worlds = [
+        paya,
+        dhian,
+        corfu,
+        focaline,
+        lablon,
+        heguz,
+        violante,
+        pavanne,
+        carsten,
+        zila,
+        jesedipere,
+        yebab,
+        nasemin,
+        zykoca,
+        aramanx,
+        pysadi,
+        ldd,
+        rugbird,
+        towers,
+        feneteman,
+        lewis,
+        aramis,
+        junidy,
+        patinir,
+        natoko,
+        reacher,
+        vinorian,
+        nutema,
+        margesi,
+        saarinen,
+    ]
+    for ii, world1 in enumerate(worlds):
+        for jj in range(ii + 1, len(worlds)):
+            world2 = worlds[jj]
+            print(world1.name, world2.name, world1.btn(world2))
     assert aramis.btn(ldd) == 8
     assert aramis.btn(natoko) == 6.5
     assert aramis.btn(reacher) == 7
