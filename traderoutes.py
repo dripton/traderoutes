@@ -428,7 +428,6 @@ class World:
                     total_path.append(current)
                 total_path.pop()
                 total_path.reverse()
-                print(total_path)
                 return total_path
             for neighbor in current.neighbors1.union(current.neighbors2).union(
                 current.xboat_routes
