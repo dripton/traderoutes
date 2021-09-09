@@ -444,8 +444,13 @@ class World:
                         openset.add(neighbor)
         return None
 
-    def distance_modifier(self, other: World) -> float:
-        distance = self.navigable_distance(other)
+    def distance_modifier(
+        self, other: World, straight_line: bool = False
+    ) -> float:
+        if straight_line:
+            distance = self.straight_line_distance(other)
+        else:
+            distance = self.navigable_distance(other)
         if distance <= 1:
             return 0.0
         elif distance <= 2:
@@ -473,18 +478,18 @@ class World:
         else:
             return 6.0
 
-    def btn(self, other: World) -> float:
-        btn = (
-            self.wtn
-            + other.wtn
-            + self.wtcm(other)
-            - self.distance_modifier(other)
-        )
+    def btn(self, other: World, straight_line: bool = False) -> float:
         min_wtn = min(self.wtn, other.wtn)
+        base_btn = self.wtn + other.wtn + self.wtcm(other)
+        btn = base_btn - self.distance_modifier(
+            other, straight_line=straight_line
+        )
         return min(btn, min_wtn + 5)
 
-    def effective_passenger_btn(self, other: World) -> float:
-        result = self.btn(other)
+    def effective_passenger_btn(
+        self, other: World, straight_line: bool = False
+    ) -> float:
+        result = self.btn(other, straight_line=straight_line)
         for world in [self, other]:
             if "Ri" in world.trade_classifications:
                 result += 0.5
@@ -568,7 +573,7 @@ class Sector:
                         allegiance_code
                     ] = allegiance_name
         global location_to_sector
-        # Set this last after the sector is as fully built as possible.
+        # Set this last, after the sector is as fully built as possible.
         location_to_sector[self.location] = self
 
     def parse_column_data(self, data_dir: str, sector_name: str):
