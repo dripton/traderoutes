@@ -114,6 +114,34 @@ def worlds_by_wtn() -> List[Tuple[float, World]]:
     return wtn_worlds
 
 
+def populate_trade_routes() -> None:
+    """Fill in main_routes, minor_routes, and feeder_routes.
+
+    This must be called after all Sectors and Worlds are mostly built.
+    rules say: main: 10+  feeder: 9-9.5  minor: 8-8.5
+    wiki says: blue major 12, cyan main 11, green intermediate 10,
+               yellow feeder 9, red minor 8, no line 1-7
+    """
+    # TODO Merge trade routes together
+    # TODO Mark the intermediate planets on the routes
+    wtn_worlds = worlds_by_wtn()
+    for ii, (wtn1, world1) in enumerate(wtn_worlds):
+        for jj in range(ii + 1, len(wtn_worlds)):
+            (wtn2, world2) = wtn_worlds[jj]
+            # This is really slow if we set straight_line to False to
+            # get more accurate routes.
+            btn = world1.btn(world2, straight_line=True)
+            if btn >= 10:
+                world1.main_routes.add(world2)
+                world2.main_routes.add(world1)
+            elif btn >= 9:
+                world1.feeder_routes.add(world2)
+                world2.feeder_routes.add(world1)
+            elif btn >= 8:
+                world1.minor_routes.add(world2)
+                world2.minor_routes.add(world1)
+
+
 class World:
     sector: Sector
     hex_: str
@@ -131,6 +159,9 @@ class World:
     allegiance: str
     stars: List[str]
     xboat_routes: Set[World]
+    main_routes: Set[World]
+    feeder_routes: Set[World]
+    minor_routes: Set[World]
     neighbors1: Set[World]
     neighbors2: Set[World]
     neighbors3: Set[World]
@@ -146,6 +177,9 @@ class World:
         self.stars = []
         self.trade_classifications = set()
         self.xboat_routes = set()
+        self.main_routes = set()
+        self.feeder_routes = set()
+        self.minor_routes = set()
         self.neighbors1 = set()
         self.neighbors2 = set()
         self.neighbors3 = set()
@@ -409,6 +443,8 @@ class World:
 
         If it's not reachable, return None.
         """
+        # TODO Maybe change this from a method to a function and memoize it so
+        # we can reuse partial paths across the map
         openheap = []  # type: List[Tuple[int, World]]
         openset = set()  # type: Set[World]
         came_from = {}  # type: Dict[World, World]
