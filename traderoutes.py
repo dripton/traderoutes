@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
-import heapq
+from heapq import heappush, heappop
 import math
 import os
 import shutil
@@ -416,10 +416,10 @@ class World:
         g_scores[self] = 0
         f_scores = defaultdict(lambda: maxsize)  # type: Dict[World, int]
         f_scores[self] = self.straight_line_distance(goal)
-        heapq.heappush(openheap, ((f_scores[self], self)))
+        heappush(openheap, ((f_scores[self], self)))
         openset.add(self)
         while openheap:
-            (f_score, current) = heapq.heappop(openheap)
+            (f_score, current) = heappop(openheap)
             openset.remove(current)
             if current == goal:
                 total_path = [current]
@@ -440,9 +440,7 @@ class World:
                     g_scores[neighbor] = tentative_g_score
                     f_scores[neighbor] = tentative_g_score + sld
                     if neighbor not in openset:
-                        heapq.heappush(
-                            openheap, (f_scores[neighbor], neighbor)
-                        )
+                        heappush(openheap, (f_scores[neighbor], neighbor))
                         openset.add(neighbor)
         return None
 
