@@ -377,7 +377,7 @@ def test_xboat_routes(spin, dene, xboat_routes):
 
 
 @pytest.fixture(scope="session")
-def neighbors(tempdir, spin, dene):
+def neighbors(tempdir, spin, dene, xboat_routes):
     spin.populate_neighbors()
     dene.populate_neighbors()
 
