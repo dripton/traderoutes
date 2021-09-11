@@ -72,11 +72,12 @@ predecessors = numpy.zeros((1, 1))  # type: numpy.ndarray
 
 
 def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
-    for sector in sector_names:
-        data_path = os.path.join(data_dir, sector)
-        sector_xml_filename = sector + ".xml"
+    for sector_name in sector_names:
+        sector_data_filename = sector_name + ".sec"
+        data_path = os.path.join(data_dir, sector_data_filename)
+        sector_xml_filename = sector_name + ".xml"
         metadata_path = os.path.join(data_dir, sector_xml_filename)
-        escaped_sector = urllib.parse.quote(sector)
+        escaped_sector = urllib.parse.quote(sector_name)
         if not os.path.exists(data_path):
             url = f"https://travellermap.com/data/{escaped_sector}"
             response = urllib.request.urlopen(url)
@@ -614,7 +615,8 @@ class Sector:
         location_to_sector[self.location] = self
 
     def parse_column_data(self, data_dir: str, sector_name: str):
-        data_path = os.path.join(data_dir, sector_name)
+        sector_data_filename = sector_name + ".sec"
+        data_path = os.path.join(data_dir, sector_data_filename)
         with open(data_path) as fil:
             for line in fil:
                 line = line.strip()

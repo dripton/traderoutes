@@ -28,7 +28,7 @@ def test_download_sector_data(tempdir, download):
     sector_names = ["Deneb", "Spinward Marches"]
     all_filenames = []
     for sector_name in sector_names:
-        all_filenames.append(sector_name)
+        all_filenames.append(sector_name + ".sec")
         all_filenames.append(sector_name + ".xml")
     assert sorted(os.listdir(tempdir)) == all_filenames
     for filename in os.listdir(tempdir):
