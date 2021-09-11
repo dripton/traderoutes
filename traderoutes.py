@@ -539,18 +539,24 @@ class World:
         min_wtn = min(self.wtn, other.wtn)
         base_btn = self.wtn + other.wtn + self.wtcm(other)
         btn = base_btn - self.distance_modifier(other)
-        return min(btn, min_wtn + 5)
+        # The rules don't say that BTN can't be negative, but it seems more
+        # reasonable not to go below zero.
+        return max(0, min(btn, min_wtn + 5))
 
     def effective_passenger_btn(self, other: World) -> float:
-        result = self.btn(other)
+        min_wtn = min(self.wtn, other.wtn)
+        base_btn = self.wtn + other.wtn + self.wtcm(other)
+        pbtn = base_btn - self.distance_modifier(other)
         for world in [self, other]:
             if "Ri" in world.trade_classifications:
-                result += 0.5
+                pbtn += 0.5
             if "Cp" in world.trade_classifications:
-                result += 0.5
+                pbtn += 0.5
             if "Cs" in world.trade_classifications:
-                result += 1.0
-        return result
+                pbtn += 1.0
+        # The rules don't say that PBTN can't be negative, but it seems more
+        # reasonable not to go below zero.
+        return max(0, min(pbtn, min_wtn + 5))
 
 
 class Sector:

@@ -296,6 +296,8 @@ def test_btn(spin, dene, neighbors, navigable_distances):
     saarinen = dene.hex_to_world["0113"]
     marz = dene.hex_to_world["0201"]
     regina = spin.hex_to_world["1910"]
+    andor = spin.hex_to_world["0236"]
+    candory = spin.hex_to_world["0336"]
     worlds = [
         paya,
         dhian,
@@ -351,6 +353,8 @@ def test_btn(spin, dene, neighbors, navigable_distances):
     assert vinorian.btn(nutema) == 6.5
     assert nutema.btn(margesi) == 5.5
     assert margesi.btn(saarinen) == 5.5
+    assert aramis.btn(andor) == 0
+    assert andor.btn(candory) == 8
 
 
 def test_effective_passenger_btn(spin, dene, neighbors, navigable_distances):
@@ -367,6 +371,8 @@ def test_effective_passenger_btn(spin, dene, neighbors, navigable_distances):
     junidy = spin.hex_to_world["3202"]
     marz = dene.hex_to_world["0201"]
     regina = spin.hex_to_world["1910"]
+    andor = spin.hex_to_world["0236"]
+    candory = spin.hex_to_world["0336"]
     assert aramis.effective_passenger_btn(ldd) == 8.5
     assert aramis.effective_passenger_btn(natoko) == 7
     assert aramis.effective_passenger_btn(reacher) == 7.5
@@ -386,6 +392,8 @@ def test_effective_passenger_btn(spin, dene, neighbors, navigable_distances):
     assert vinorian.effective_passenger_btn(nutema) == 6.5
     assert nutema.effective_passenger_btn(margesi) == 5.5
     assert margesi.effective_passenger_btn(saarinen) == 5.5
+    assert aramis.effective_passenger_btn(andor) == 0
+    assert andor.effective_passenger_btn(candory) == 8
 
 
 @pytest.fixture(scope="session")
