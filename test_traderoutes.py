@@ -357,7 +357,7 @@ def test_btn(spin, dene, neighbors, navigable_distances):
     assert andor.btn(candory) == 8
 
 
-def test_effective_passenger_btn(spin, dene, neighbors, navigable_distances):
+def test_passenger_btn(spin, dene, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -373,27 +373,27 @@ def test_effective_passenger_btn(spin, dene, neighbors, navigable_distances):
     regina = spin.hex_to_world["1910"]
     andor = spin.hex_to_world["0236"]
     candory = spin.hex_to_world["0336"]
-    assert aramis.effective_passenger_btn(ldd) == 8.5
-    assert aramis.effective_passenger_btn(natoko) == 7
-    assert aramis.effective_passenger_btn(reacher) == 7.5
-    assert aramis.effective_passenger_btn(vinorian) == 8.5
-    assert aramis.effective_passenger_btn(corfu) == 6
-    assert aramis.effective_passenger_btn(lablon) == 6.5
-    assert aramis.effective_passenger_btn(junidy) == 8
-    assert aramis.effective_passenger_btn(marz) == 8
-    assert aramis.effective_passenger_btn(regina) == 8.5
-    assert ldd.effective_passenger_btn(aramis) == 8.5
-    assert ldd.effective_passenger_btn(natoko) == 6
-    assert ldd.effective_passenger_btn(reacher) == 6.5
-    assert ldd.effective_passenger_btn(nutema) == 6
-    assert ldd.effective_passenger_btn(margesi) == 6
-    assert ldd.effective_passenger_btn(saarinen) == 5.5
-    assert natoko.effective_passenger_btn(reacher) == 5.5
-    assert vinorian.effective_passenger_btn(nutema) == 6.5
-    assert nutema.effective_passenger_btn(margesi) == 5.5
-    assert margesi.effective_passenger_btn(saarinen) == 5.5
-    assert aramis.effective_passenger_btn(andor) == 0
-    assert andor.effective_passenger_btn(candory) == 8
+    assert aramis.passenger_btn(ldd) == 8.5
+    assert aramis.passenger_btn(natoko) == 7
+    assert aramis.passenger_btn(reacher) == 7.5
+    assert aramis.passenger_btn(vinorian) == 8.5
+    assert aramis.passenger_btn(corfu) == 6
+    assert aramis.passenger_btn(lablon) == 6.5
+    assert aramis.passenger_btn(junidy) == 8
+    assert aramis.passenger_btn(marz) == 8
+    assert aramis.passenger_btn(regina) == 8.5
+    assert ldd.passenger_btn(aramis) == 8.5
+    assert ldd.passenger_btn(natoko) == 6
+    assert ldd.passenger_btn(reacher) == 6.5
+    assert ldd.passenger_btn(nutema) == 6
+    assert ldd.passenger_btn(margesi) == 6
+    assert ldd.passenger_btn(saarinen) == 5.5
+    assert natoko.passenger_btn(reacher) == 5.5
+    assert vinorian.passenger_btn(nutema) == 6.5
+    assert nutema.passenger_btn(margesi) == 5.5
+    assert margesi.passenger_btn(saarinen) == 5.5
+    assert aramis.passenger_btn(andor) == 0
+    assert andor.passenger_btn(candory) == 8
 
 
 @pytest.fixture(scope="session")

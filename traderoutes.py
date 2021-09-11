@@ -543,7 +543,7 @@ class World:
         # reasonable not to go below zero.
         return max(0, min(btn, min_wtn + 5))
 
-    def effective_passenger_btn(self, other: World) -> float:
+    def passenger_btn(self, other: World) -> float:
         min_wtn = min(self.wtn, other.wtn)
         base_btn = self.wtn + other.wtn + self.wtcm(other)
         pbtn = base_btn - self.distance_modifier(other)
