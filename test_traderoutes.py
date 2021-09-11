@@ -3,6 +3,7 @@
 import os
 import shutil
 import stat
+from sys import maxsize
 import tempfile
 
 import pytest
@@ -261,6 +262,41 @@ def test_straight_line_distance(spin, dene):
     assert aramis.straight_line_distance(junidy) == 8
     assert aramis.straight_line_distance(marz) == 10
     assert aramis.straight_line_distance(regina) == 12
+
+
+def test_distance_modifier(spin, dene, neighbors, navigable_distances):
+    aramis = spin.hex_to_world["3110"]
+    ldd = spin.hex_to_world["3010"]
+    natoko = spin.hex_to_world["3209"]
+    reacher = spin.hex_to_world["3210"]
+    vinorian = spin.hex_to_world["3111"]
+    nutema = spin.hex_to_world["3112"]
+    margesi = spin.hex_to_world["3212"]
+    saarinen = dene.hex_to_world["0113"]
+    corfu = spin.hex_to_world["2602"]
+    lablon = spin.hex_to_world["2701"]
+    junidy = spin.hex_to_world["3202"]
+    marz = dene.hex_to_world["0201"]
+    regina = spin.hex_to_world["1910"]
+    pavanne = spin.hex_to_world["2905"]
+    corfu = spin.hex_to_world["2602"]
+    mongo = spin.hex_to_world["1204"]
+    collace = spin.hex_to_world["1237"]
+    salaam = dene.hex_to_world["3213"]
+    raweh = spin.hex_to_world["0139"]
+    andor = spin.hex_to_world["0236"]
+    assert aramis.distance_modifier(aramis) == 0
+    assert aramis.distance_modifier(ldd) == 0
+    assert ldd.distance_modifier(natoko) == 0.5
+    assert aramis.distance_modifier(margesi) == 1
+    assert aramis.distance_modifier(pavanne) == 1.5
+    assert aramis.distance_modifier(regina) == 2
+    assert aramis.distance_modifier(corfu) == 2
+    assert aramis.distance_modifier(mongo) == 2.5
+    assert aramis.distance_modifier(collace) == 3
+    assert collace.distance_modifier(salaam) == 3
+    assert raweh.distance_modifier(salaam) == 3.5
+    assert aramis.distance_modifier(andor) == maxsize
 
 
 def test_btn(spin, dene, neighbors, navigable_distances):

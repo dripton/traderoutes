@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+from bisect import bisect_left
 from collections import defaultdict
 from heapq import heappush, heappop
 import math
@@ -508,32 +509,9 @@ class World:
         distance = self.navigable_distance(other)
         if distance is None:
             return maxsize
-        if distance <= 1:
-            return 0.0
-        elif distance <= 2:
-            return 0.5
-        elif distance <= 5:
-            return 1.0
-        elif distance <= 9:
-            return 1.5
-        elif distance <= 19:
-            return 2.0
-        elif distance <= 29:
-            return 2.5
-        elif distance <= 59:
-            return 3.0
-        elif distance <= 99:
-            return 3.5
-        elif distance <= 199:
-            return 4.0
-        elif distance <= 299:
-            return 4.5
-        elif distance <= 599:
-            return 5.0
-        elif distance <= 999:
-            return 5.5
-        else:
-            return 6.0
+        table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, maxsize]
+        index = bisect_left(table, distance)
+        return index / 2
 
     def btn(self, other: World) -> float:
         min_wtn = min(self.wtn, other.wtn)
