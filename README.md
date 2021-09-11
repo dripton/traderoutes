@@ -22,3 +22,5 @@ pytest for running tests
 mypy for type checking
 black for code formatting
 git and github for version control
+scipy for floyd_warshall
+numpy for scipy

@@ -263,7 +263,7 @@ def test_straight_line_distance(spin, dene):
     assert aramis.straight_line_distance(regina) == 12
 
 
-def test_btn(spin, dene, neighbors):
+def test_btn(spin, dene, neighbors, navigable_distances):
     paya = spin.hex_to_world["2509"]
     dhian = spin.hex_to_world["2510"]
     corfu = spin.hex_to_world["2602"]
@@ -353,7 +353,7 @@ def test_btn(spin, dene, neighbors):
     assert margesi.btn(saarinen) == 5.5
 
 
-def test_effective_passenger_btn(spin, dene, neighbors):
+def test_effective_passenger_btn(spin, dene, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -484,7 +484,56 @@ def test_neighbors(spin, dene, neighbors):
     }
 
 
-def test_navigable_path(spin, dene, neighbors):
+@pytest.fixture(scope="session")
+def navigable_distances(tempdir, spin, dene, xboat_routes, neighbors):
+    tr.populate_navigable_distances()
+
+
+def test_navigable_distance(spin, dene, neighbors, navigable_distances):
+    aramis = spin.hex_to_world["3110"]
+    ldd = spin.hex_to_world["3010"]
+    natoko = spin.hex_to_world["3209"]
+    reacher = spin.hex_to_world["3210"]
+    vinorian = spin.hex_to_world["3111"]
+    nutema = spin.hex_to_world["3112"]
+    margesi = spin.hex_to_world["3212"]
+    saarinen = dene.hex_to_world["0113"]
+    corfu = spin.hex_to_world["2602"]
+    lablon = spin.hex_to_world["2701"]
+    junidy = spin.hex_to_world["3202"]
+    marz = dene.hex_to_world["0201"]
+    regina = spin.hex_to_world["1910"]
+    celepina = spin.hex_to_world["2913"]
+    teh = dene.hex_to_world["0208"]
+    fennec = dene.hex_to_world["0311"]
+    ash = dene.hex_to_world["0504"]
+    roup = spin.hex_to_world["2007"]
+    jenghe = spin.hex_to_world["1810"]
+    dinomn = spin.hex_to_world["1912"]
+    towers = spin.hex_to_world["3103"]
+    pysadi = spin.hex_to_world["3008"]
+    zila = spin.hex_to_world["2908"]
+    lewis = spin.hex_to_world["3107"]
+    patinir = spin.hex_to_world["3207"]
+    henoz = spin.hex_to_world["2912"]
+    valhalla = spin.hex_to_world["2811"]
+    suvfoto = dene.hex_to_world["0211"]
+    kretikaa = dene.hex_to_world["0209"]
+    new_ramma = dene.hex_to_world["0108"]
+    reno = spin.hex_to_world["0102"]
+    javan = dene.hex_to_world["2131"]
+    andor = spin.hex_to_world["0236"]
+    candory = spin.hex_to_world["0336"]
+    assert aramis.navigable_distance(aramis) == 0
+    assert aramis.navigable_distance(ldd) == 1
+    assert aramis.navigable_distance(corfu) == 16
+    assert reno.navigable_distance(javan) == 61
+    assert andor.navigable_distance(candory) == 1
+    assert candory.navigable_distance(andor) == 1
+    assert aramis.navigable_distance(andor) is None
+
+
+def test_navigable_path(spin, dene, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -516,6 +565,7 @@ def test_navigable_path(spin, dene, neighbors):
     focaline = spin.hex_to_world["2607"]
     moughas = spin.hex_to_world["2406"]
     keng = spin.hex_to_world["2405"]
+    enope = spin.hex_to_world["2205"]
     becks_world = spin.hex_to_world["2204"]
     yorbund = spin.hex_to_world["2303"]
     heya = spin.hex_to_world["2402"]
@@ -524,59 +574,27 @@ def test_navigable_path(spin, dene, neighbors):
     new_ramma = dene.hex_to_world["0108"]
     reno = spin.hex_to_world["0102"]
     javan = dene.hex_to_world["2131"]
+    andor = spin.hex_to_world["0236"]
+    candory = spin.hex_to_world["0336"]
+    assert aramis.navigable_path(aramis) == []
     assert aramis.navigable_path(ldd) == [ldd]
+    assert ldd.navigable_path(aramis) == [aramis]
     assert aramis.navigable_path(corfu) == [
         pysadi,
         zila,
         violante,
         focaline,
         moughas,
-        keng,
+        enope,
         becks_world,
         yorbund,
         heya,
         corfu,
     ]
     assert len(reno.navigable_path(javan)) == 33
-
-
-def test_navigable_distance(spin, dene, neighbors):
-    aramis = spin.hex_to_world["3110"]
-    ldd = spin.hex_to_world["3010"]
-    natoko = spin.hex_to_world["3209"]
-    reacher = spin.hex_to_world["3210"]
-    vinorian = spin.hex_to_world["3111"]
-    nutema = spin.hex_to_world["3112"]
-    margesi = spin.hex_to_world["3212"]
-    saarinen = dene.hex_to_world["0113"]
-    corfu = spin.hex_to_world["2602"]
-    lablon = spin.hex_to_world["2701"]
-    junidy = spin.hex_to_world["3202"]
-    marz = dene.hex_to_world["0201"]
-    regina = spin.hex_to_world["1910"]
-    celepina = spin.hex_to_world["2913"]
-    teh = dene.hex_to_world["0208"]
-    fennec = dene.hex_to_world["0311"]
-    ash = dene.hex_to_world["0504"]
-    roup = spin.hex_to_world["2007"]
-    jenghe = spin.hex_to_world["1810"]
-    dinomn = spin.hex_to_world["1912"]
-    towers = spin.hex_to_world["3103"]
-    pysadi = spin.hex_to_world["3008"]
-    zila = spin.hex_to_world["2908"]
-    lewis = spin.hex_to_world["3107"]
-    patinir = spin.hex_to_world["3207"]
-    henoz = spin.hex_to_world["2912"]
-    valhalla = spin.hex_to_world["2811"]
-    suvfoto = dene.hex_to_world["0211"]
-    kretikaa = dene.hex_to_world["0209"]
-    new_ramma = dene.hex_to_world["0108"]
-    reno = spin.hex_to_world["0102"]
-    javan = dene.hex_to_world["2131"]
-    assert aramis.navigable_distance(aramis) == 0
-    assert aramis.navigable_distance(ldd) == 1
-    assert aramis.navigable_distance(corfu) == 16
-    assert reno.navigable_distance(javan) == 61
+    assert andor.navigable_path(candory) == [candory]
+    assert candory.navigable_path(andor) == [andor]
+    assert aramis.navigable_path(andor) is None
 
 
 def test_worlds_by_wtn(spin, dene):
@@ -596,7 +614,7 @@ def test_populate_trade_routes(spin, dene, trade_routes):
     mora = spin.hex_to_world["3124"]
     assert not aramis.main_routes
     assert len(aramis.feeder_routes) == 3
-    assert len(aramis.minor_routes) == 16
-    assert len(mora.main_routes) == 24
-    assert len(mora.feeder_routes) == 135
-    assert len(mora.minor_routes) == 284
+    assert len(aramis.minor_routes) == 14
+    assert len(mora.main_routes) == 19
+    assert len(mora.feeder_routes) == 125
+    assert len(mora.minor_routes) == 270

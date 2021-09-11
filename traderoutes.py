@@ -18,6 +18,10 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
+import numpy
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import floyd_warshall
+
 
 starport_traveller_to_gurps = {
     "A": "V",
@@ -55,6 +59,15 @@ location_to_sector = {}  # type: Dict[Tuple[int, int], Sector]
 
 # Global to allow any world to find other worlds
 abs_coords_to_world = {}  # type: Dict[Tuple[float, float], World]
+
+# Global to have consistent indexes for navigable path computations
+sorted_worlds = []  # type: List[World]
+
+# Global so we only have to compute it once
+navigable_dist = {}  # type: Dict[Tuple[World, World], int]
+
+# Global so we only have to compute it once
+predecessors = numpy.zeros((1, 1))  # type: numpy.ndarray
 
 
 def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
@@ -106,12 +119,48 @@ def same_allegiance(allegiance1: str, allegiance2: str) -> bool:
 
 
 def worlds_by_wtn() -> List[Tuple[float, World]]:
+    """Must be run after all worlds are built."""
     wtn_worlds = []
-    for world in abs_coords_to_world.values():
+    for world in sorted_worlds:
         wtn_worlds.append((world.wtn, world))
     wtn_worlds.sort()
     wtn_worlds.reverse()
     return wtn_worlds
+
+
+def populate_navigable_distances() -> None:
+    """Find minimum distances between all worlds using the Floyd-Warshall
+    algorithm.
+
+    Only use 1- and 2-hex jumps, except along xboat routes.
+
+    Must be run after all neighbors are built.
+    """
+    global sorted_worlds
+    sorted_worlds = sorted(abs_coords_to_world.values())
+    index_to_world = {}
+    for ii, world in enumerate(sorted_worlds):
+        world.index = ii
+        index_to_world[ii] = world
+    nd = numpy.full((len(sorted_worlds), len(sorted_worlds)), maxsize)
+    for ii, world in enumerate(sorted_worlds):
+        for neighbor1 in world.neighbors1:
+            nd[ii][neighbor1.index] = 1
+        for neighbor2 in world.neighbors2:
+            nd[ii][neighbor2.index] = 2
+        for neighbor in world.xboat_routes:
+            nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
+        nd[ii][ii] = 0
+    global predecessors
+    dist_matrix, predecessors = floyd_warshall(
+        nd, directed=False, return_predecessors=True
+    )
+    global navigable_dist
+    for yy, row in enumerate(dist_matrix):
+        world1 = index_to_world[yy]
+        for xx, dist in enumerate(row):
+            world2 = index_to_world[xx]
+            navigable_dist[world1, world2] = dist
 
 
 def populate_trade_routes() -> None:
@@ -128,9 +177,7 @@ def populate_trade_routes() -> None:
     for ii, (wtn1, world1) in enumerate(wtn_worlds):
         for jj in range(ii + 1, len(wtn_worlds)):
             (wtn2, world2) = wtn_worlds[jj]
-            # This is really slow if we set straight_line to False to
-            # get more accurate routes.
-            btn = world1.btn(world2, straight_line=True)
+            btn = world1.btn(world2)
             if btn >= 10:
                 world1.main_routes.add(world2)
                 world2.main_routes.add(world1)
@@ -165,6 +212,7 @@ class World:
     neighbors1: Set[World]
     neighbors2: Set[World]
     neighbors3: Set[World]
+    index: int
 
     def __init__(
         self,
@@ -257,6 +305,8 @@ class World:
         return "World: " + self.name
 
     def __eq__(self, other):
+        if other is None:
+            return False
         x1, y1 = self.abs_coords
         x2, y2 = other.abs_coords
         return x1 == x2 and y1 == y2
@@ -422,70 +472,42 @@ class World:
         ydelta = max(0, abs(y2 - y1) - xdelta / 2)
         return math.floor(xdelta + ydelta)
 
-    def navigable_distance(self, other: World) -> int:
-        """Return the navigable distance in hexes between the worlds"""
-        # TODO Maybe this should return None instead of maxsize if there's
-        # no path?
-        path = self.navigable_path(other)
-        if path is None:
-            return maxsize
-        total = 0
-        world = self
-        for world2 in path:
-            total += world.straight_line_distance(world2)
-            world = world2
-        return total
-
-    def navigable_path(self, goal: World) -> Optional[List[World]]:
-        """Return the shortest navigable path from self to goal.
+    def navigable_distance(self, other: World) -> Optional[int]:
+        """Return the length of the shortest navigable path from self to other.
 
         This uses jump-4 only along Xboat routes, and jump-2 otherwise.
+        If it's not reachable, return None.
+        This can only be called after populate_navigable_distances() runs.
+        """
+        dist = navigable_dist[self, other]
+        if dist >= maxsize:
+            return None
+        return dist
+
+    def navigable_path(self, other: World) -> Optional[List[World]]:
+        """Return the shortest navigable path from self to other.
 
         If it's not reachable, return None.
+        The path should include other but not self.
+        This uses jump-4 only along Xboat routes, and jump-2 otherwise.
+        This can only be called after populate_navigable_distances() runs.
         """
-        # TODO Maybe change this from a method to a function and memoize it so
-        # we can reuse partial paths across the map
-        openheap = []  # type: List[Tuple[int, World]]
-        openset = set()  # type: Set[World]
-        came_from = {}  # type: Dict[World, World]
-        g_scores = defaultdict(lambda: maxsize)  # type: Dict[World, int]
-        g_scores[self] = 0
-        f_scores = defaultdict(lambda: maxsize)  # type: Dict[World, int]
-        f_scores[self] = self.straight_line_distance(goal)
-        heappush(openheap, ((f_scores[self], self)))
-        openset.add(self)
-        while openheap:
-            (f_score, current) = heappop(openheap)
-            openset.remove(current)
-            if current == goal:
-                total_path = [current]
-                while current in came_from:
-                    current = came_from[current]
-                    total_path.append(current)
-                total_path.pop()
-                total_path.reverse()
-                return total_path
-            for neighbor in current.neighbors1.union(current.neighbors2).union(
-                current.xboat_routes
-            ):
-                sld = current.straight_line_distance(neighbor)
-                tentative_g_score = g_scores[current] + sld
-                if tentative_g_score < g_scores[neighbor]:
-                    came_from[neighbor] = current
-                    g_scores[neighbor] = tentative_g_score
-                    f_scores[neighbor] = tentative_g_score + sld
-                    if neighbor not in openset:
-                        heappush(openheap, (f_scores[neighbor], neighbor))
-                        openset.add(neighbor)
-        return None
+        if self == other:
+            return []
+        if self.navigable_distance(other) is None:
+            return None
+        world2 = self
+        path = []
+        while world2 != other:
+            index = predecessors[other.index][world2.index]
+            world2 = sorted_worlds[index]
+            path.append(world2)
+        return path
 
-    def distance_modifier(
-        self, other: World, straight_line: bool = False
-    ) -> float:
-        if straight_line:
-            distance = self.straight_line_distance(other)
-        else:
-            distance = self.navigable_distance(other)
+    def distance_modifier(self, other: World) -> float:
+        distance = self.navigable_distance(other)
+        if distance is None:
+            return maxsize
         if distance <= 1:
             return 0.0
         elif distance <= 2:
@@ -513,18 +535,14 @@ class World:
         else:
             return 6.0
 
-    def btn(self, other: World, straight_line: bool = False) -> float:
+    def btn(self, other: World) -> float:
         min_wtn = min(self.wtn, other.wtn)
         base_btn = self.wtn + other.wtn + self.wtcm(other)
-        btn = base_btn - self.distance_modifier(
-            other, straight_line=straight_line
-        )
+        btn = base_btn - self.distance_modifier(other)
         return min(btn, min_wtn + 5)
 
-    def effective_passenger_btn(
-        self, other: World, straight_line: bool = False
-    ) -> float:
-        result = self.btn(other, straight_line=straight_line)
+    def effective_passenger_btn(self, other: World) -> float:
+        result = self.btn(other)
         for world in [self, other]:
             if "Ri" in world.trade_classifications:
                 result += 0.5
