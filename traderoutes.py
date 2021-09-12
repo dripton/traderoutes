@@ -64,11 +64,9 @@ abs_coords_to_world = {}  # type: Dict[Tuple[float, float], World]
 # Global to have consistent indexes for navigable path computations
 sorted_worlds = []  # type: List[World]
 
-# Global so we only have to compute it once
-navigable_dist = {}  # type: Dict[Tuple[World, World], int]
-
-# Global so we only have to compute it once
-predecessors = numpy.zeros((1, 1))  # type: numpy.ndarray
+# Global so we only have to compute these once each
+navigable_dist_info2 = None  # type Optional[NavigableDistanceInfo]
+navigable_dist_info3 = None  # type Optional[NavigableDistanceInfo]
 
 
 def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
@@ -130,15 +128,23 @@ def worlds_by_wtn() -> List[Tuple[float, World]]:
     return wtn_worlds
 
 
-def populate_navigable_distances() -> None:
+class NavigableDistanceInfo:
+    navigable_dist: Dict[Tuple[World, World], int]
+    predecessors: numpy.ndarray
+
+    def __init__(self, navigable_dist, predecessors):
+        self.navigable_dist = navigable_dist
+        self.predecessors = predecessors
+
+
+def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
     """Find minimum distances between all worlds using the Floyd-Warshall
     algorithm.
 
-    Only use 1- and 2-hex jumps, except along xboat routes.
+    Only use jumps of up to max_jump hexes, except along xboat routes.
 
     Must be run after all neighbors are built.
     """
-    # TODO Benchmark scipy's version of Floyd-Warshall against a Rust version.
     global sorted_worlds
     sorted_worlds = sorted(abs_coords_to_world.values())
     index_to_world = {}
@@ -147,23 +153,29 @@ def populate_navigable_distances() -> None:
         index_to_world[ii] = world
     nd = numpy.full((len(sorted_worlds), len(sorted_worlds)), maxsize)
     for ii, world in enumerate(sorted_worlds):
-        for neighbor1 in world.neighbors1:
-            nd[ii][neighbor1.index] = 1
-        for neighbor2 in world.neighbors2:
-            nd[ii][neighbor2.index] = 2
+        if max_jump >= 3:
+            for neighbor3 in world.neighbors3:
+                nd[ii][neighbor3.index] = 3
+        if max_jump >= 2:
+            for neighbor2 in world.neighbors2:
+                nd[ii][neighbor2.index] = 2
+        if max_jump >= 1:
+            for neighbor1 in world.neighbors1:
+                nd[ii][neighbor1.index] = 1
         for neighbor in world.xboat_routes:
             nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
         nd[ii][ii] = 0
-    global predecessors
+
     dist_matrix, predecessors = floyd_warshall(
         nd, directed=False, return_predecessors=True
     )
-    global navigable_dist
+    navigable_dist = {}
     for yy, row in enumerate(dist_matrix):
         world1 = index_to_world[yy]
         for xx, dist in enumerate(row):
             world2 = index_to_world[xx]
             navigable_dist[world1, world2] = dist
+    return NavigableDistanceInfo(navigable_dist, predecessors)
 
 
 def populate_trade_routes() -> None:
@@ -181,8 +193,6 @@ def populate_trade_routes() -> None:
     # TODO Try to avoid Red and Amber Zones
     # TODO Try to avoid poor starports
     # TODO Try to avoid worlds of different allegiance
-    # TODO Calculate jump-3 routes and use them for feeder or better
-    #      routes if it saves a jump.
     wtn_worlds = worlds_by_wtn()
 
     # Add initial endpoint-only routes to both endpoints
@@ -207,25 +217,28 @@ def populate_trade_routes() -> None:
                 world2.minor_routes.add(world1)
 
     # Find all the route paths
-    major_route_paths = defaultdict(
-        int
-    )  # type: Dict[Tuple[World, World], int]
-    main_route_paths = defaultdict(int)  # type: Dict[Tuple[World, World], int]
-    intermediate_route_paths = defaultdict(
-        int
-    )  # type: Dict[Tuple[World, World], int]
-    feeder_route_paths = defaultdict(
-        int
-    )  # type: Dict[Tuple[World, World], int]
-    minor_route_paths = defaultdict(
-        int
-    )  # type: Dict[Tuple[World, World], int]
+    dd = defaultdict
+    major_route_paths = dd(int)  # type: Dict[Tuple[World, World], int]
+    main_route_paths = dd(int)  # type: Dict[Tuple[World, World], int]
+    intermediate_route_paths = dd(int)  # type: Dict[Tuple[World, World], int]
+    feeder_route_paths = dd(int)  # type: Dict[Tuple[World, World], int]
+    minor_route_paths = dd(int)  # type: Dict[Tuple[World, World], int]
 
     def find_route_paths(
-        route_paths: Dict[Tuple[World, World], int], routes: Set[World]
+        route_paths: Dict[Tuple[World, World], int],
+        routes: Set[World],
+        max_jump: int,
     ) -> None:
         for world2 in routes:
-            possible_path = world1.navigable_path(world2)
+            possible_path = world1.navigable_path(world2, 2)
+            possible_path3 = None
+            if max_jump == 3:
+                possible_path3 = world1.navigable_path(world2, 3)
+            if possible_path is None or (
+                possible_path3 is not None
+                and len(possible_path3) < len(possible_path)
+            ):
+                possible_path = possible_path3
             if possible_path is not None:
                 path = [world1] + possible_path
                 if len(path) >= 2:
@@ -239,11 +252,13 @@ def populate_trade_routes() -> None:
                         route_paths[world_tuple] += 1  # type: ignore
 
     for unused, world1 in wtn_worlds:
-        find_route_paths(major_route_paths, world1.major_routes)
-        find_route_paths(main_route_paths, world1.main_routes)
-        find_route_paths(intermediate_route_paths, world1.intermediate_routes)
-        find_route_paths(feeder_route_paths, world1.feeder_routes)
-        find_route_paths(minor_route_paths, world1.minor_routes)
+        find_route_paths(major_route_paths, world1.major_routes, 3)
+        find_route_paths(main_route_paths, world1.main_routes, 3)
+        find_route_paths(
+            intermediate_route_paths, world1.intermediate_routes, 3
+        )
+        find_route_paths(feeder_route_paths, world1.feeder_routes, 3)
+        find_route_paths(minor_route_paths, world1.minor_routes, 2)
 
     def promote_routes(smaller_route_paths, bigger_route_paths):
         for (world1, world2), count in smaller_route_paths.items():
@@ -603,19 +618,24 @@ class World:
         ydelta = max(0, abs(y2 - y1) - xdelta / 2)
         return math.floor(xdelta + ydelta)
 
-    def navigable_distance(self, other: World) -> Optional[int]:
+    def navigable_distance(self, other: World, max_jump: int) -> Optional[int]:
         """Return the length of the shortest navigable path from self to other.
 
-        This uses jump-4 only along Xboat routes, and jump-2 otherwise.
         If it's not reachable, return None.
         This can only be called after populate_navigable_distances() runs.
         """
+        if max_jump == 2 and navigable_dist_info2 is not None:
+            navigable_dist = navigable_dist_info2.navigable_dist
+        elif max_jump == 3 and navigable_dist_info3 is not None:
+            navigable_dist = navigable_dist_info3.navigable_dist
         dist = navigable_dist[self, other]
         if dist == maxsize:
             return None
         return dist
 
-    def navigable_path(self, other: World) -> Optional[List[World]]:
+    def navigable_path(
+        self, other: World, max_jump: int
+    ) -> Optional[List[World]]:
         """Return the shortest navigable path from self to other.
 
         If it's not reachable, return None.
@@ -625,8 +645,12 @@ class World:
         """
         if self == other:
             return []
-        if self.navigable_distance(other) is None:
+        if self.navigable_distance(other, max_jump) is None:
             return None
+        if max_jump == 2 and navigable_dist_info2 is not None:
+            predecessors = navigable_dist_info2.predecessors
+        elif max_jump == 3 and navigable_dist_info3 is not None:
+            predecessors = navigable_dist_info3.predecessors
         world2 = self
         path = []
         while world2 != other:
@@ -636,7 +660,7 @@ class World:
         return path
 
     def distance_modifier(self, other: World) -> float:
-        distance = self.navigable_distance(other)
+        distance = self.navigable_distance(other, 2)
         if distance is None:
             return maxsize
         table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, maxsize]
@@ -838,7 +862,11 @@ def main():
     for sector in location_to_sector.values():
         sector.parse_xml_routes(data_dir)
         sector.populate_neighbors()
-    populate_navigable_distances()
+
+    global navigable_dist_info2
+    navigable_dist_info2 = populate_navigable_distances(2)
+    global navigable_dist_info3
+    navigable_dist_info3 = populate_navigable_distances(3)
     populate_trade_routes()
 
     if tempdir is not None:

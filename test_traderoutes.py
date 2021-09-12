@@ -530,7 +530,8 @@ def test_neighbors(spin, dene, neighbors):
 
 @pytest.fixture(scope="session")
 def navigable_distances(tempdir, spin, dene, xboat_routes, neighbors):
-    tr.populate_navigable_distances()
+    tr.navigable_dist_info2 = tr.populate_navigable_distances(2)
+    tr.navigable_dist_info3 = tr.populate_navigable_distances(3)
 
 
 def test_navigable_distance(spin, dene, neighbors, navigable_distances):
@@ -568,13 +569,14 @@ def test_navigable_distance(spin, dene, neighbors, navigable_distances):
     javan = dene.hex_to_world["2131"]
     andor = spin.hex_to_world["0236"]
     candory = spin.hex_to_world["0336"]
-    assert aramis.navigable_distance(aramis) == 0
-    assert aramis.navigable_distance(ldd) == 1
-    assert aramis.navigable_distance(corfu) == 16
-    assert reno.navigable_distance(javan) == 61
-    assert andor.navigable_distance(candory) == 1
-    assert candory.navigable_distance(andor) == 1
-    assert aramis.navigable_distance(andor) is None
+    assert aramis.navigable_distance(aramis, 2) == 0
+    assert aramis.navigable_distance(ldd, 2) == 1
+    assert aramis.navigable_distance(corfu, 2) == 16
+    assert reno.navigable_distance(javan, 2) == 61
+    assert andor.navigable_distance(candory, 2) == 1
+    assert candory.navigable_distance(andor, 2) == 1
+    assert aramis.navigable_distance(andor, 2) is None
+    assert aramis.navigable_distance(andor, 3) == 41
 
 
 def test_navigable_path(spin, dene, neighbors, navigable_distances):
@@ -620,10 +622,10 @@ def test_navigable_path(spin, dene, neighbors, navigable_distances):
     javan = dene.hex_to_world["2131"]
     andor = spin.hex_to_world["0236"]
     candory = spin.hex_to_world["0336"]
-    assert aramis.navigable_path(aramis) == []
-    assert aramis.navigable_path(ldd) == [ldd]
-    assert ldd.navigable_path(aramis) == [aramis]
-    assert aramis.navigable_path(corfu) == [
+    assert aramis.navigable_path(aramis, 2) == []
+    assert aramis.navigable_path(ldd, 2) == [ldd]
+    assert ldd.navigable_path(aramis, 2) == [aramis]
+    assert aramis.navigable_path(corfu, 2) == [
         pysadi,
         zila,
         violante,
@@ -635,10 +637,11 @@ def test_navigable_path(spin, dene, neighbors, navigable_distances):
         heya,
         corfu,
     ]
-    assert len(reno.navigable_path(javan)) == 33
-    assert andor.navigable_path(candory) == [candory]
-    assert candory.navigable_path(andor) == [andor]
-    assert aramis.navigable_path(andor) is None
+    assert len(reno.navigable_path(javan, 2)) == 33
+    assert andor.navigable_path(candory, 2) == [candory]
+    assert candory.navigable_path(andor, 2) == [andor]
+    assert aramis.navigable_path(andor, 2) is None
+    assert len(aramis.navigable_path(andor, 3)) == 16
 
 
 def test_worlds_by_wtn(spin, dene):
@@ -658,11 +661,11 @@ def test_populate_trade_routes(spin, dene, trade_routes):
     mora = spin.hex_to_world["3124"]
     assert len(aramis.major_routes) == 0
     assert len(aramis.main_routes) == 0
-    assert len(aramis.intermediate_routes) == 2
-    assert len(aramis.feeder_routes) == 2
+    assert len(aramis.intermediate_routes) == 4
+    assert len(aramis.feeder_routes) == 4
     assert len(aramis.minor_routes) == 2
-    assert len(mora.major_routes) == 1
-    assert len(mora.main_routes) == 3
-    assert len(mora.intermediate_routes) == 1
-    assert len(mora.feeder_routes) == 1
+    assert len(mora.major_routes) == 0
+    assert len(mora.main_routes) == 7
+    assert len(mora.intermediate_routes) == 4
+    assert len(mora.feeder_routes) == 2
     assert len(mora.minor_routes) == 0
