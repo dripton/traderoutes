@@ -24,3 +24,8 @@ black for code formatting
 git and github for version control
 scipy for floyd_warshall
 numpy for scipy
+
+
+TODO:
+What library should we use to write PDFs from Python and possibly Rust?
+Contenders appear to be skia, pdfium, and cairo.
