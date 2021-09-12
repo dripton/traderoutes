@@ -121,7 +121,7 @@ def same_allegiance(allegiance1: str, allegiance2: str) -> bool:
 
 
 def worlds_by_wtn() -> List[Tuple[float, World]]:
-    """Must be run after all worlds are built."""
+    """Must be run after navigable distances are built."""
     wtn_worlds = []
     for world in sorted_worlds:
         wtn_worlds.append((world.wtn, world))
@@ -138,6 +138,7 @@ def populate_navigable_distances() -> None:
 
     Must be run after all neighbors are built.
     """
+    # TODO Benchmark scipy's version of Floyd-Warshall against a Rust version.
     global sorted_worlds
     sorted_worlds = sorted(abs_coords_to_world.values())
     index_to_world = {}
@@ -173,9 +174,16 @@ def populate_trade_routes() -> None:
     wiki says: blue major 12, cyan main 11, green intermediate 10,
                yellow feeder 9, red minor 8, no line 1-7
     """
-    # TODO Merge trade routes together
-    # TODO Mark the intermediate planets on the routes
+    # TODO Track endpoint traffic and transient traffic
+    # TODO If there are two routes pick the one with more traffic.
+    # TODO Try to avoid Red and Amber Zones
+    # TODO Try to avoid poor starports
+    # TODO Try to avoid worlds of different allegiance
+    # TODO Calculate jump-3 routes and use them for feeder or better
+    #      routes if it saves a jump.
     wtn_worlds = worlds_by_wtn()
+
+    # Add initial endpoint-only routes to both endpoints
     for ii, (wtn1, world1) in enumerate(wtn_worlds):
         for jj in range(ii + 1, len(wtn_worlds)):
             (wtn2, world2) = wtn_worlds[jj]
@@ -189,6 +197,79 @@ def populate_trade_routes() -> None:
             elif btn >= 8:
                 world1.minor_routes.add(world2)
                 world2.minor_routes.add(world1)
+
+    # Find all the route paths
+    main_route_paths = defaultdict(int)  # type: Dict[Tuple[World, World], int]
+    feeder_route_paths = defaultdict(
+        int
+    )  # type: Dict[Tuple[World, World], int]
+    minor_route_paths = defaultdict(
+        int
+    )  # type: Dict[Tuple[World, World], int]
+
+    def find_route_paths(
+        route_paths: Dict[Tuple[World, World], int], routes: Set[World]
+    ) -> None:
+        for world2 in routes:
+            possible_path = world1.navigable_path(world2)
+            if possible_path is not None:
+                path = [world1] + possible_path
+                if len(path) >= 2:
+                    for ii in range(len(path) - 1):
+                        first = path[ii]
+                        second = path[ii + 1]
+                        world_list = sorted(
+                            [first, second]
+                        )  # type: List[World]
+                        world_tuple = tuple(world_list)
+                        route_paths[world_tuple] += 1  # type: ignore
+
+    for unused, world1 in wtn_worlds:
+        find_route_paths(main_route_paths, world1.main_routes)
+        find_route_paths(feeder_route_paths, world1.feeder_routes)
+        find_route_paths(minor_route_paths, world1.minor_routes)
+
+    def promote_routes(smaller_route_paths, bigger_route_paths):
+        for (world1, world2), count in smaller_route_paths.items():
+            if count >= 3:
+                bigger_route_paths[(world1, world2)] += 1
+                smaller_route_paths[(world1, world2)] = 0
+        # Clear out elements with zero counts
+        new_smaller_route_paths = {}  # type: Dict[Tuple[World, World], int]
+        for (world1, world2), count in smaller_route_paths.items():
+            if count > 0:
+                new_smaller_route_paths[(world1, world2)] = count
+        return new_smaller_route_paths, bigger_route_paths
+
+    minor_route_paths, feeder_route_paths = promote_routes(
+        minor_route_paths, feeder_route_paths
+    )
+    feeder_route_paths, main_route_paths = promote_routes(
+        feeder_route_paths, main_route_paths
+    )
+
+    # Clear out the initial routes and fill in the full versions.
+    for unused, world1 in wtn_worlds:
+        world1.main_routes = set()
+        world1.feeder_routes = set()
+        world1.minor_routes = set()
+
+    # Keep the largest route for each pair of worlds.
+    for (world1, world2) in minor_route_paths:
+        world1.minor_routes.add(world2)
+        world2.minor_routes.add(world1)
+    for (world1, world2) in feeder_route_paths:
+        world1.feeder_routes.add(world2)
+        world2.feeder_routes.add(world1)
+        world1.minor_routes.discard(world2)
+        world2.minor_routes.discard(world1)
+    for (world1, world2) in main_route_paths:
+        world1.main_routes.add(world2)
+        world2.main_routes.add(world1)
+        world1.feeder_routes.discard(world2)
+        world2.feeder_routes.discard(world1)
+        world1.minor_routes.discard(world2)
+        world2.minor_routes.discard(world1)
 
 
 class World:
@@ -482,7 +563,7 @@ class World:
         This can only be called after populate_navigable_distances() runs.
         """
         dist = navigable_dist[self, other]
-        if dist >= maxsize:
+        if dist == maxsize:
             return None
         return dist
 
@@ -671,6 +752,7 @@ class Sector:
                 end_world.xboat_routes.add(start_world)
 
     def populate_neighbors(self):
+        """Must be called after all Sectors and Worlds are otherwise built."""
         for world in self.hex_to_world.values():
             world.populate_neighbors()
 
@@ -708,6 +790,8 @@ def main():
     for sector in location_to_sector.values():
         sector.parse_xml_routes(data_dir)
         sector.populate_neighbors()
+    populate_navigable_distances()
+    populate_trade_routes()
 
     if tempdir is not None:
         shutil.rmtree(tempdir)

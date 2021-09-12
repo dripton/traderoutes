@@ -649,16 +649,16 @@ def test_worlds_by_wtn(spin, dene):
 
 
 @pytest.fixture(scope="session")
-def trade_routes(tempdir, spin, dene, neighbors):
+def trade_routes(tempdir, spin, dene, neighbors, navigable_distances):
     tr.populate_trade_routes()
 
 
 def test_populate_trade_routes(spin, dene, trade_routes):
     aramis = spin.hex_to_world["3110"]
     mora = spin.hex_to_world["3124"]
-    assert not aramis.main_routes
-    assert len(aramis.feeder_routes) == 3
-    assert len(aramis.minor_routes) == 14
-    assert len(mora.main_routes) == 19
-    assert len(mora.feeder_routes) == 125
-    assert len(mora.minor_routes) == 270
+    assert len(aramis.main_routes) == 2
+    assert len(aramis.feeder_routes) == 2
+    assert len(aramis.minor_routes) == 2
+    assert len(mora.main_routes) == 5
+    assert len(mora.feeder_routes) == 1
+    assert len(mora.minor_routes) == 0
