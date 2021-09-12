@@ -656,9 +656,13 @@ def trade_routes(tempdir, spin, dene, neighbors, navigable_distances):
 def test_populate_trade_routes(spin, dene, trade_routes):
     aramis = spin.hex_to_world["3110"]
     mora = spin.hex_to_world["3124"]
-    assert len(aramis.main_routes) == 2
+    assert len(aramis.major_routes) == 0
+    assert len(aramis.main_routes) == 0
+    assert len(aramis.intermediate_routes) == 2
     assert len(aramis.feeder_routes) == 2
     assert len(aramis.minor_routes) == 2
-    assert len(mora.main_routes) == 5
+    assert len(mora.major_routes) == 1
+    assert len(mora.main_routes) == 3
+    assert len(mora.intermediate_routes) == 1
     assert len(mora.feeder_routes) == 1
     assert len(mora.minor_routes) == 0

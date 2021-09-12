@@ -167,12 +167,14 @@ def populate_navigable_distances() -> None:
 
 
 def populate_trade_routes() -> None:
-    """Fill in main_routes, minor_routes, and feeder_routes.
+    """Fill in major_routes, main_routes, intermediate_routes, minor_routes,
+    and feeder_routes for all Worlds.
 
     This must be called after all Sectors and Worlds are mostly built.
-    rules say: main: 10+  feeder: 9-9.5  minor: 8-8.5
-    wiki says: blue major 12, cyan main 11, green intermediate 10,
-               yellow feeder 9, red minor 8, no line 1-7
+    The rules say: main: 10+  feeder: 9-9.5  minor: 8-8.5
+    The wiki says: blue major 12, cyan main 11, green intermediate 10,
+                   yellow feeder 9, red minor 8, no line 1-7
+    The wiki version is more fun so we'll use that.
     """
     # TODO Track endpoint traffic and transient traffic
     # TODO If there are two routes pick the one with more traffic.
@@ -188,9 +190,15 @@ def populate_trade_routes() -> None:
         for jj in range(ii + 1, len(wtn_worlds)):
             (wtn2, world2) = wtn_worlds[jj]
             btn = world1.btn(world2)
-            if btn >= 10:
+            if btn >= 12:
+                world1.major_routes.add(world2)
+                world2.major_routes.add(world1)
+            elif btn >= 11:
                 world1.main_routes.add(world2)
                 world2.main_routes.add(world1)
+            elif btn >= 10:
+                world1.intermediate_routes.add(world2)
+                world2.intermediate_routes.add(world1)
             elif btn >= 9:
                 world1.feeder_routes.add(world2)
                 world2.feeder_routes.add(world1)
@@ -199,7 +207,13 @@ def populate_trade_routes() -> None:
                 world2.minor_routes.add(world1)
 
     # Find all the route paths
+    major_route_paths = defaultdict(
+        int
+    )  # type: Dict[Tuple[World, World], int]
     main_route_paths = defaultdict(int)  # type: Dict[Tuple[World, World], int]
+    intermediate_route_paths = defaultdict(
+        int
+    )  # type: Dict[Tuple[World, World], int]
     feeder_route_paths = defaultdict(
         int
     )  # type: Dict[Tuple[World, World], int]
@@ -225,7 +239,9 @@ def populate_trade_routes() -> None:
                         route_paths[world_tuple] += 1  # type: ignore
 
     for unused, world1 in wtn_worlds:
+        find_route_paths(major_route_paths, world1.major_routes)
         find_route_paths(main_route_paths, world1.main_routes)
+        find_route_paths(intermediate_route_paths, world1.intermediate_routes)
         find_route_paths(feeder_route_paths, world1.feeder_routes)
         find_route_paths(minor_route_paths, world1.minor_routes)
 
@@ -244,13 +260,21 @@ def populate_trade_routes() -> None:
     minor_route_paths, feeder_route_paths = promote_routes(
         minor_route_paths, feeder_route_paths
     )
-    feeder_route_paths, main_route_paths = promote_routes(
-        feeder_route_paths, main_route_paths
+    feeder_route_paths, intermediate_route_paths = promote_routes(
+        feeder_route_paths, intermediate_route_paths
+    )
+    intermediate_route_paths, main_route_paths = promote_routes(
+        intermediate_route_paths, main_route_paths
+    )
+    main_route_paths, major_route_paths = promote_routes(
+        main_route_paths, major_route_paths
     )
 
     # Clear out the initial routes and fill in the full versions.
     for unused, world1 in wtn_worlds:
+        world1.major_routes = set()
         world1.main_routes = set()
+        world1.intermediate_routes = set()
         world1.feeder_routes = set()
         world1.minor_routes = set()
 
@@ -263,9 +287,29 @@ def populate_trade_routes() -> None:
         world2.feeder_routes.add(world1)
         world1.minor_routes.discard(world2)
         world2.minor_routes.discard(world1)
+    for (world1, world2) in intermediate_route_paths:
+        world1.intermediate_routes.add(world2)
+        world2.intermediate_routes.add(world1)
+        world1.feeder_routes.discard(world2)
+        world2.feeder_routes.discard(world1)
+        world1.minor_routes.discard(world2)
+        world2.minor_routes.discard(world1)
     for (world1, world2) in main_route_paths:
         world1.main_routes.add(world2)
         world2.main_routes.add(world1)
+        world1.intermediate_routes.discard(world2)
+        world2.intermediate_routes.discard(world1)
+        world1.feeder_routes.discard(world2)
+        world2.feeder_routes.discard(world1)
+        world1.minor_routes.discard(world2)
+        world2.minor_routes.discard(world1)
+    for (world1, world2) in major_route_paths:
+        world1.major_routes.add(world2)
+        world2.major_routes.add(world1)
+        world1.main_routes.discard(world2)
+        world2.main_routes.discard(world1)
+        world1.intermediate_routes.discard(world2)
+        world2.intermediate_routes.discard(world1)
         world1.feeder_routes.discard(world2)
         world2.feeder_routes.discard(world1)
         world1.minor_routes.discard(world2)
@@ -289,7 +333,9 @@ class World:
     allegiance: str
     stars: List[str]
     xboat_routes: Set[World]
+    major_routes: Set[World]
     main_routes: Set[World]
+    intermediate_routes: Set[World]
     feeder_routes: Set[World]
     minor_routes: Set[World]
     neighbors1: Set[World]
@@ -308,7 +354,9 @@ class World:
         self.stars = []
         self.trade_classifications = set()
         self.xboat_routes = set()
+        self.major_routes = set()
         self.main_routes = set()
+        self.intermediate_routes = set()
         self.feeder_routes = set()
         self.minor_routes = set()
         self.neighbors1 = set()
