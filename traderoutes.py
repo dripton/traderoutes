@@ -9,8 +9,9 @@ import argparse
 from bisect import bisect_left
 from collections import defaultdict
 from heapq import heappush, heappop
-from math import floor
+from math import floor, pi
 import os
+import random
 import shutil
 from sys import maxsize
 import tempfile
@@ -359,14 +360,30 @@ def generate_pdf(sector):
     The top left hex of a sector is 0101, with 0102 below it.
     The 16 subsectors within the sector are each 8x10.
 
+    TODO Global redraw ordering.
     TODO Sector name
+    TODO Subsector names and borders
     TODO Adjacent sector names
     TODO Allegiance borders
     TODO Red and Amber zones
     TODO Gas giants
-    TODO World, water vs. dry vs. belt vs. rich
     TODO UWP
     """
+
+    def draw_route(worlds, line_width, rgba):
+        for world2 in worlds:
+            x2, y2 = world2.abs_coords
+            delta_x = x2 - x1
+            delta_y = y2 - y1
+            cx2 = cx + delta_x * 3 * scale
+            cy2 = cy + delta_y * 2 * SQRT3 * scale
+            center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+            ctx.set_line_width(line_width)
+            ctx.set_source_rgba(*rgba)
+            ctx.move_to(*center)
+            ctx.line_to(*center2)
+            ctx.stroke()
+
     width = 25000
     height = 35000
     output_dir = "/var/tmp"  # TODO command-line option
@@ -388,8 +405,8 @@ def generate_pdf(sector):
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_ = f"{x:02}{y:02}"
-                cx = (x + 1) * 3 * scale  # leftmost
-                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost
+                cx = (x + 1) * 3 * scale  # leftmost point
+                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
                 vertexes = []  # start at top left and go clockwise
                 vertexes.append((cx + scale, cy))
                 vertexes.append((cx + 3 * scale, cy))
@@ -399,6 +416,7 @@ def generate_pdf(sector):
                 vertexes.append((cx, cy + SQRT3 * scale))
                 center = (cx + 2 * scale, cy + SQRT3 * scale)
 
+                # hexsides
                 ctx.set_line_width(0.03 * scale)
                 ctx.move_to(*vertexes[0])
                 ctx.set_source_rgba(1, 1, 1, 1)  # white
@@ -406,131 +424,131 @@ def generate_pdf(sector):
                     ctx.line_to(*vertexes[ii])
                 ctx.stroke()
 
-                # hex label
-                text = hex_
-                ctx.set_font_size(0.35 * scale)
-                ctx.set_font_face(normal_font_face)
-                extents = ctx.text_extents(text)
-                ctx.set_source_rgba(1, 1, 1, 0.6)  # white
-                ctx.move_to(
-                    cx + 2 * scale - extents.width / 2,
-                    cy + SQRT3 * scale * 0.3,
-                )
-                ctx.show_text(text)
-
                 world = sector.hex_to_world.get(hex_)
                 if world:
-                    # world name
-                    # Capitalize for high population
+                    x1, y1 = world.abs_coords
+
+                    # Xboat routes
+                    draw_route(
+                        world.xboat_routes, 0.2 * scale, (0.5, 0, 0.5, 1)
+                    )
+
+                    # Trade routes
+                    draw_route(
+                        world.major_routes, 0.05 * scale, (0, 0, 1, 0.5)
+                    )
+                    draw_route(
+                        world.main_routes, 0.05 * scale, (0, 0.8, 0.8, 0.5)
+                    )
+                    draw_route(
+                        world.intermediate_routes, 0.05 * scale, (0, 1, 0, 0.5)
+                    )
+                    draw_route(
+                        world.feeder_routes, 0.05 * scale, (1, 1, 0, 0.5)
+                    )
+                    draw_route(
+                        world.minor_routes, 0.05 * scale, (1, 0, 0, 0.5)
+                    )
+
+                    # World name
+                    # All-caps for high population
                     if world.population.isalpha() or world.population == "9":
                         text = world.name.upper()
                     else:
                         text = world.name
-
                     ctx.set_font_size(0.4 * scale)
                     ctx.set_font_face(bold_font_face)
                     extents = ctx.text_extents(text)
-                    # Red if a capital
+                    # Red if a sector or subsector capital
                     if (
                         "Cp" in world.trade_classifications
                         or "Cs" in world.trade_classifications
                     ):
-                        ctx.set_source_rgba(1, 0.2, 0.2, 0.6)  # red
+                        ctx.set_source_rgba(1, 0, 0, 1)  # red
                     else:
-                        ctx.set_source_rgba(1, 1, 1, 0.6)  # white
+                        ctx.set_source_rgba(1, 1, 1, 1)  # white
                     ctx.move_to(
                         cx + 2 * scale - extents.width / 2,
                         cy + SQRT3 * scale * 1.8,
                     )
                     ctx.show_text(text)
 
-                    x1, y1 = world.abs_coords
+                    # World circle
+                    if world.size == "0":
+                        # Asteroid belt
+                        rgba = (1, 1, 1, 1)  # white
+                        ctx.set_source_rgba(*rgba)
+                        num_asteroids = random.randrange(5, 20)
+                        for unused in range(num_asteroids):
+                            x_pos = (
+                                center[0]
+                                - 0.25 * scale
+                                + random.random() * 0.5 * scale
+                            )
+                            y_pos = (
+                                center[1]
+                                - 0.25 * scale
+                                + random.random() * 0.5 * scale
+                            )
+                            ctx.new_sub_path()
+                            ctx.arc(
+                                x_pos,
+                                y_pos,
+                                random.random() * 0.04 * scale,
+                                0,
+                                2 * pi,
+                            )
+                            ctx.stroke_preserve()
+                            ctx.fill()
+                    else:
+                        if (
+                            "Ri" in world.trade_classifications
+                            and "Ag" in world.trade_classifications
+                        ):
+                            rgba = (1, 1, 0, 1)  # yellow
+                            fill_rgba = rgba
+                        elif "Ri" in world.trade_classifications:
+                            rgba = (0.5, 0, 0.5, 1)  # purple
+                            fill_rgba = rgba
+                        elif "Ag" in world.trade_classifications:
+                            rgba = (0, 1, 0, 1)  # green
+                            fill_rgba = rgba
+                        elif "In" in world.trade_classifications:
+                            rgba = (0.5, 0.5, 0.5, 1)  # green
+                            fill_rgba = rgba
+                        elif world.atmosphere in {"B", "C"}:
+                            rgba = (1, 0.65, 0, 1)  # orange
+                            fill_rgba = rgba
+                        elif world.atmosphere == "0":
+                            rgba = (1, 1, 1, 1)  # white
+                            fill_rgba = (0, 0, 0, 1)  # black
+                        elif world.hydrosphere != "0":
+                            rgba = (0, 0, 1, 1)  # blue
+                            fill_rgba = rgba
+                        else:
+                            rgba = (1, 1, 1, 1)  # white
+                            fill_rgba = rgba
+                        ctx.set_source_rgba(*rgba)
+                        ctx.new_sub_path()
+                        ctx.arc(center[0], center[1], 0.3 * scale, 0, 2 * pi)
+                        ctx.set_line_width(0.03 * scale)
+                        ctx.stroke_preserve()
+                        if fill_rgba != rgba:
+                            ctx.set_source_rgba(*fill_rgba)
+                        ctx.fill()
 
-                    # TODO Factor out duplicate code
+                # hex label
+                text = hex_
+                ctx.set_font_size(0.35 * scale)
+                ctx.set_font_face(normal_font_face)
+                extents = ctx.text_extents(text)
 
-                    # Xboat routes
-                    for world2 in world.xboat_routes:
-                        x2, y2 = world2.abs_coords
-                        delta_x = x2 - x1
-                        delta_y = y2 - y1
-                        cx2 = cx + delta_x * 3 * scale
-                        cy2 = cy + delta_y * 2 * SQRT3 * scale
-                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
-                        ctx.set_line_width(0.2 * scale)
-                        ctx.set_source_rgba(0.53, 0.0, 0.53, 1)  # purple
-                        ctx.move_to(*center)
-                        ctx.line_to(*center2)
-                        ctx.stroke()
-
-                    # Major routes
-                    for world2 in world.major_routes:
-                        x2, y2 = world2.abs_coords
-                        delta_x = x2 - x1
-                        delta_y = y2 - y1
-                        cx2 = cx + delta_x * 3 * scale
-                        cy2 = cy + delta_y * 2 * SQRT3 * scale
-                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
-                        ctx.set_line_width(0.05 * scale)
-                        ctx.set_source_rgba(0, 0, 1, 0.5)  # blue
-                        ctx.move_to(*center)
-                        ctx.line_to(*center2)
-                        ctx.stroke()
-
-                    # Main routes
-                    for world2 in world.main_routes:
-                        x2, y2 = world2.abs_coords
-                        delta_x = x2 - x1
-                        delta_y = y2 - y1
-                        cx2 = cx + delta_x * 3 * scale
-                        cy2 = cy + delta_y * 2 * SQRT3 * scale
-                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
-                        ctx.set_line_width(0.05 * scale)
-                        ctx.set_source_rgba(0.0, 0.8, 0.8, 0.5)  # cyan
-                        ctx.move_to(*center)
-                        ctx.line_to(*center2)
-                        ctx.stroke()
-
-                    # Intermediate routes
-                    for world2 in world.intermediate_routes:
-                        x2, y2 = world2.abs_coords
-                        delta_x = x2 - x1
-                        delta_y = y2 - y1
-                        cx2 = cx + delta_x * 3 * scale
-                        cy2 = cy + delta_y * 2 * SQRT3 * scale
-                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
-                        ctx.set_line_width(0.05 * scale)
-                        ctx.set_source_rgba(0, 1, 0, 0.5)  # green
-                        ctx.move_to(*center)
-                        ctx.line_to(*center2)
-                        ctx.stroke()
-
-                    # Feeder routes
-                    for world2 in world.feeder_routes:
-                        x2, y2 = world2.abs_coords
-                        delta_x = x2 - x1
-                        delta_y = y2 - y1
-                        cx2 = cx + delta_x * 3 * scale
-                        cy2 = cy + delta_y * 2 * SQRT3 * scale
-                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
-                        ctx.set_line_width(0.05 * scale)
-                        ctx.set_source_rgba(1, 1, 0, 0.5)  # yellow
-                        ctx.move_to(*center)
-                        ctx.line_to(*center2)
-                        ctx.stroke()
-
-                    # Minor routes
-                    for world2 in world.minor_routes:
-                        x2, y2 = world2.abs_coords
-                        delta_x = x2 - x1
-                        delta_y = y2 - y1
-                        cx2 = cx + delta_x * 3 * scale
-                        cy2 = cy + delta_y * 2 * SQRT3 * scale
-                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
-                        ctx.set_line_width(0.05 * scale)
-                        ctx.set_source_rgba(1, 0, 0, 0.5)  # red
-                        ctx.move_to(*center)
-                        ctx.line_to(*center2)
-                        ctx.stroke()
+                ctx.set_source_rgba(1, 1, 1, 0.6)  # white
+                ctx.move_to(
+                    cx + 2 * scale - extents.width / 2,
+                    cy + SQRT3 * scale * 0.3,
+                )
+                ctx.show_text(text)
 
 
 class World:
