@@ -19,9 +19,13 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
+import cairo
 import numpy
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import floyd_warshall
+
+
+SQRT3 = 3.0 ** 0.5
 
 
 starport_traveller_to_gurps = {
@@ -144,6 +148,9 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
     Only use jumps of up to max_jump hexes, except along xboat routes.
 
     Must be run after all neighbors are built.
+
+    TODO Skip worlds with no gas giants, water, or starport.
+    TODO Skip red zone worlds with no gas giants.
     """
     global sorted_worlds
     sorted_worlds = sorted(abs_coords_to_world.values())
@@ -329,6 +336,201 @@ def populate_trade_routes() -> None:
         world2.feeder_routes.discard(world1)
         world1.minor_routes.discard(world2)
         world2.minor_routes.discard(world1)
+
+
+def generate_pdfs():
+    """Generate PDF output for each sector.
+
+    Sectors are 32 hexes wide by 40 hexes tall.  Subsectors are 8x10.
+    Even-numbered hexes are shifted one-half hex down.
+    Hexes are flat on top and bottom.
+    The top left hex of a sector is 0101, with 0102 below it.
+    """
+    for sector in location_to_sector.values():
+        generate_pdf(sector)
+
+
+def generate_pdf(sector):
+    """Generate PDF output for sector.
+
+    Sectors are 32 hexes wide by 40 hexes tall.
+    Even-numbered hexes are shifted one-half hex down.
+    Hexes are flat on top and bottom.
+    The top left hex of a sector is 0101, with 0102 below it.
+    The 16 subsectors within the sector are each 8x10.
+
+    TODO Sector name
+    TODO Adjacent sector names
+    TODO Allegiance borders
+    TODO Red and Amber zones
+    TODO Gas giants
+    TODO World, water vs. dry vs. belt vs. rich
+    TODO UWP
+    """
+    width = 25000
+    height = 35000
+    output_dir = "/var/tmp"  # TODO command-line option
+    output_filename = f"{sector.name}.pdf"
+    output_path = os.path.join(output_dir, output_filename)
+    scale = 15
+    sector_hex_width = 32
+    sector_hex_height = 40
+    with cairo.PDFSurface(output_path, width, height) as surface:
+        ctx = cairo.Context(surface)
+        ctx.scale(scale, scale)
+        ctx.set_source_rgba(0, 0, 0, 1)  # black background
+        ctx.rectangle(0, 0, width, height)
+        ctx.fill()
+        normal_font_face = cairo.ToyFontFace("Sans")
+        bold_font_face = cairo.ToyFontFace(
+            "Sans", cairo.FontSlant.NORMAL, cairo.FontWeight.BOLD
+        )
+        for x in range(1, sector_hex_width + 1):
+            for y in range(1, sector_hex_height + 1):
+                hex_ = f"{x:02}{y:02}"
+                cx = (x + 1) * 3 * scale  # leftmost
+                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost
+                vertexes = []  # start at top left and go clockwise
+                vertexes.append((cx + scale, cy))
+                vertexes.append((cx + 3 * scale, cy))
+                vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
+                vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
+                vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
+                vertexes.append((cx, cy + SQRT3 * scale))
+                center = (cx + 2 * scale, cy + SQRT3 * scale)
+
+                ctx.set_line_width(0.03 * scale)
+                ctx.move_to(*vertexes[0])
+                ctx.set_source_rgba(1, 1, 1, 1)  # white
+                for ii in [1, 2, 3, 4, 5, 0]:
+                    ctx.line_to(*vertexes[ii])
+                ctx.stroke()
+
+                # hex label
+                text = hex_
+                ctx.set_font_size(0.35 * scale)
+                ctx.set_font_face(normal_font_face)
+                extents = ctx.text_extents(text)
+                ctx.set_source_rgba(1, 1, 1, 0.6)  # white
+                ctx.move_to(
+                    cx + 2 * scale - extents.width / 2,
+                    cy + SQRT3 * scale * 0.3,
+                )
+                ctx.show_text(text)
+
+                world = sector.hex_to_world.get(hex_)
+                if world:
+                    # world name
+                    # Capitalize for high population
+                    if world.population.isalpha() or world.population == "9":
+                        text = world.name.upper()
+                    else:
+                        text = world.name
+
+                    ctx.set_font_size(0.4 * scale)
+                    ctx.set_font_face(bold_font_face)
+                    extents = ctx.text_extents(text)
+                    # Red if a capital
+                    if (
+                        "Cp" in world.trade_classifications
+                        or "Cs" in world.trade_classifications
+                    ):
+                        ctx.set_source_rgba(1, 0.2, 0.2, 0.6)  # red
+                    else:
+                        ctx.set_source_rgba(1, 1, 1, 0.6)  # white
+                    ctx.move_to(
+                        cx + 2 * scale - extents.width / 2,
+                        cy + SQRT3 * scale * 1.8,
+                    )
+                    ctx.show_text(text)
+
+                    x1, y1 = world.abs_coords
+
+                    # TODO Factor out duplicate code
+
+                    # Xboat routes
+                    for world2 in world.xboat_routes:
+                        x2, y2 = world2.abs_coords
+                        delta_x = x2 - x1
+                        delta_y = y2 - y1
+                        cx2 = cx + delta_x * 3 * scale
+                        cy2 = cy + delta_y * 2 * SQRT3 * scale
+                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+                        ctx.set_line_width(0.2 * scale)
+                        ctx.set_source_rgba(0.53, 0.0, 0.53, 1)  # purple
+                        ctx.move_to(*center)
+                        ctx.line_to(*center2)
+                        ctx.stroke()
+
+                    # Major routes
+                    for world2 in world.major_routes:
+                        x2, y2 = world2.abs_coords
+                        delta_x = x2 - x1
+                        delta_y = y2 - y1
+                        cx2 = cx + delta_x * 3 * scale
+                        cy2 = cy + delta_y * 2 * SQRT3 * scale
+                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+                        ctx.set_line_width(0.05 * scale)
+                        ctx.set_source_rgba(0, 0, 1, 0.5)  # blue
+                        ctx.move_to(*center)
+                        ctx.line_to(*center2)
+                        ctx.stroke()
+
+                    # Main routes
+                    for world2 in world.main_routes:
+                        x2, y2 = world2.abs_coords
+                        delta_x = x2 - x1
+                        delta_y = y2 - y1
+                        cx2 = cx + delta_x * 3 * scale
+                        cy2 = cy + delta_y * 2 * SQRT3 * scale
+                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+                        ctx.set_line_width(0.05 * scale)
+                        ctx.set_source_rgba(0.0, 0.8, 0.8, 0.5)  # cyan
+                        ctx.move_to(*center)
+                        ctx.line_to(*center2)
+                        ctx.stroke()
+
+                    # Intermediate routes
+                    for world2 in world.intermediate_routes:
+                        x2, y2 = world2.abs_coords
+                        delta_x = x2 - x1
+                        delta_y = y2 - y1
+                        cx2 = cx + delta_x * 3 * scale
+                        cy2 = cy + delta_y * 2 * SQRT3 * scale
+                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+                        ctx.set_line_width(0.05 * scale)
+                        ctx.set_source_rgba(0, 1, 0, 0.5)  # green
+                        ctx.move_to(*center)
+                        ctx.line_to(*center2)
+                        ctx.stroke()
+
+                    # Feeder routes
+                    for world2 in world.feeder_routes:
+                        x2, y2 = world2.abs_coords
+                        delta_x = x2 - x1
+                        delta_y = y2 - y1
+                        cx2 = cx + delta_x * 3 * scale
+                        cy2 = cy + delta_y * 2 * SQRT3 * scale
+                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+                        ctx.set_line_width(0.05 * scale)
+                        ctx.set_source_rgba(1, 1, 0, 0.5)  # yellow
+                        ctx.move_to(*center)
+                        ctx.line_to(*center2)
+                        ctx.stroke()
+
+                    # Minor routes
+                    for world2 in world.minor_routes:
+                        x2, y2 = world2.abs_coords
+                        delta_x = x2 - x1
+                        delta_y = y2 - y1
+                        cx2 = cx + delta_x * 3 * scale
+                        cy2 = cy + delta_y * 2 * SQRT3 * scale
+                        center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+                        ctx.set_line_width(0.05 * scale)
+                        ctx.set_source_rgba(1, 0, 0, 0.5)  # red
+                        ctx.move_to(*center)
+                        ctx.line_to(*center2)
+                        ctx.stroke()
 
 
 class World:
@@ -868,6 +1070,7 @@ def main():
     global navigable_dist_info3
     navigable_dist_info3 = populate_navigable_distances(3)
     populate_trade_routes()
+    generate_pdfs()
 
     if tempdir is not None:
         shutil.rmtree(tempdir)
