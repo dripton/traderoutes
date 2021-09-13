@@ -9,7 +9,7 @@ import argparse
 from bisect import bisect_left
 from collections import defaultdict
 from heapq import heappush, heappop
-import math
+from math import floor
 import os
 import shutil
 from sys import maxsize
@@ -616,7 +616,7 @@ class World:
         (x2, y2) = other.abs_coords
         xdelta = abs(x2 - x1)
         ydelta = max(0, abs(y2 - y1) - xdelta / 2)
-        return math.floor(xdelta + ydelta)
+        return floor(xdelta + ydelta)
 
     def navigable_distance(self, other: World, max_jump: int) -> Optional[int]:
         """Return the length of the shortest navigable path from self to other.
