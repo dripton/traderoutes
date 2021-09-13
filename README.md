@@ -10,22 +10,18 @@ Run "python3 traderoutes.py -h" for help.
 Map data is downloaded from http://travellermap.com
 
 
-Dependencies for use:
+Runtime dependencies:
 
 Python 3.8 or later
 http://travellermap.com if you haven't already downloaded data locally
+scipy for floyd_warshall
+numpy for scipy
+pycairo for PDF drawing
 
 
-Dependencies for development:
+Development dependencies:
 
-pytest for running tests
+pytest for running unit tests
 mypy for type checking
 black for code formatting
 git and github for version control
-scipy for floyd_warshall
-numpy for scipy
-
-
-TODO:
-What library should we use to write PDFs from Python and possibly Rust?
-Contenders appear to be skia, pdfium, and cairo.
