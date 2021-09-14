@@ -366,8 +366,8 @@ def generate_pdf(sector):
     TODO Adjacent sector names
     TODO Allegiance borders
     TODO Red and Amber zones
-    TODO Gas giants
-    TODO UWP
+    TODO Bases
+    TODO Research stations
     """
 
     def draw_route(worlds, line_width, rgba):
@@ -547,6 +547,22 @@ def generate_pdf(sector):
                         ctx.stroke_preserve()
                         if fill_rgba != rgba:
                             ctx.set_source_rgba(*fill_rgba)
+                        ctx.fill()
+
+                    # gas giant
+                    if world.gas_giants != "0":
+                        rgba = (1, 1, 1, 1)  # white
+                        ctx.set_source_rgba(*rgba)
+                        ctx.new_sub_path()
+                        ctx.arc(
+                            center[0] + scale,
+                            center[1] - scale,
+                            0.1 * scale,
+                            0,
+                            2 * pi,
+                        )
+                        ctx.set_line_width(0.03 * scale)
+                        ctx.stroke_preserve()
                         ctx.fill()
 
                 # hex label
@@ -729,6 +745,10 @@ class World:
         return self.uwp[4]
 
     @property
+    def population_multiplier(self) -> str:
+        return self.pbg[0]
+
+    @property
     def government(self) -> str:
         return self.uwp[5]
 
@@ -744,6 +764,14 @@ class World:
     def g_tech_level(self) -> int:
         tech_level_int = int(self.tech_level, 17)
         return tech_level_traveller_to_gurps[tech_level_int]
+
+    @property
+    def belts(self) -> str:
+        return self.pbg[1]
+
+    @property
+    def gas_giants(self) -> str:
+        return self.pbg[2]
 
     @property
     def uwtn(self) -> float:
