@@ -363,7 +363,6 @@ def generate_pdf(sector):
     TODO Subsector names and borders
     TODO Adjacent sector names
     TODO Allegiance borders
-    TODO Red and Amber zones
     TODO Bases
     TODO Research stations
     """
@@ -553,8 +552,8 @@ def generate_pdf(sector):
                         ctx.set_source_rgba(*rgba)
                         ctx.new_sub_path()
                         ctx.arc(
-                            center[0] + scale,
-                            center[1] - scale,
+                            center[0] + 0.8 * scale,
+                            center[1] - 0.8 * scale,
                             0.1 * scale,
                             0,
                             2 * pi,
@@ -562,6 +561,24 @@ def generate_pdf(sector):
                         ctx.set_line_width(0.03 * scale)
                         ctx.stroke_preserve()
                         ctx.fill()
+
+                    # red and amber zones
+                    if world.zone in {"R", "A"}:
+                        if world.zone == "R":
+                            rgba = (1, 0, 0, 1)  # red
+                        else:
+                            rgba = (1, 1, 0, 1)  # yellow
+                        ctx.set_source_rgba(*rgba)
+                        ctx.new_sub_path()
+                        ctx.arc(
+                            center[0],
+                            center[1],
+                            1.5 * scale,
+                            0.7 * pi,
+                            2.3 * pi,
+                        )
+                        ctx.set_line_width(0.03 * scale)
+                        ctx.stroke()
 
                 # hex label
                 text = hex_
