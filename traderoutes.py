@@ -450,6 +450,18 @@ def generate_pdf(sector):
                         world.minor_routes, 0.05 * scale, (1, 0, 0, 0.5)
                     )
 
+                    # UWP
+                    ctx.set_font_size(0.35 * scale)
+                    ctx.set_font_face(normal_font_face)
+                    ctx.set_source_rgba(1, 1, 1, 1)  # white
+                    text = world.uwp
+                    extents = ctx.text_extents(text)
+                    ctx.move_to(
+                        cx + 2 * scale - extents.width / 2,
+                        cy + SQRT3 * scale * 1.5,
+                    )
+                    ctx.show_text(text)
+
                     # World name
                     # All-caps for high population
                     if world.population.isalpha() or world.population == "9":
