@@ -358,7 +358,6 @@ def generate_pdf(sector):
     The top left hex of a sector is 0101, with 0102 below it.
     The 16 subsectors within the sector are each 8x10.
 
-    TODO Global redraw ordering.
     TODO Subsector names and borders
     TODO Adjacent sector names
     TODO Allegiance borders
@@ -408,6 +407,7 @@ def generate_pdf(sector):
         ctx.move_to(width / scale / 2 - extents.width / 2, 3 * scale)
         ctx.show_text(text)
 
+        # first pass through hexes; draw hexsides
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_ = f"{x:02}{y:02}"
@@ -430,14 +430,46 @@ def generate_pdf(sector):
                     ctx.line_to(*vertexes[ii])
                 ctx.stroke()
 
+        # second pass through hexes; draw Xboat routes
+        for x in range(1, sector_hex_width + 1):
+            for y in range(1, sector_hex_height + 1):
+                hex_ = f"{x:02}{y:02}"
+                cx = (x + 1) * 3 * scale  # leftmost point
+                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
+                vertexes = []  # start at top left and go clockwise
+                vertexes.append((cx + scale, cy))
+                vertexes.append((cx + 3 * scale, cy))
+                vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
+                vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
+                vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
+                vertexes.append((cx, cy + SQRT3 * scale))
+                center = (cx + 2 * scale, cy + SQRT3 * scale)
+
                 world = sector.hex_to_world.get(hex_)
                 if world:
                     x1, y1 = world.abs_coords
 
                     # Xboat routes
-                    draw_route(
-                        world.xboat_routes, 0.2 * scale, (0.5, 0, 0.5, 1)
-                    )
+                    draw_route(world.xboat_routes, 0.3 * scale, (0, 0, 1, 1))
+
+        # third pass through hexes; draw trade routes
+        for x in range(1, sector_hex_width + 1):
+            for y in range(1, sector_hex_height + 1):
+                hex_ = f"{x:02}{y:02}"
+                cx = (x + 1) * 3 * scale  # leftmost point
+                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
+                vertexes = []  # start at top left and go clockwise
+                vertexes.append((cx + scale, cy))
+                vertexes.append((cx + 3 * scale, cy))
+                vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
+                vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
+                vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
+                vertexes.append((cx, cy + SQRT3 * scale))
+                center = (cx + 2 * scale, cy + SQRT3 * scale)
+
+                world = sector.hex_to_world.get(hex_)
+                if world:
+                    x1, y1 = world.abs_coords
 
                     # Trade routes
                     draw_route(
@@ -455,6 +487,26 @@ def generate_pdf(sector):
                     draw_route(
                         world.minor_routes, 0.05 * scale, (1, 0, 0, 0.5)
                     )
+
+        # fourth pass through hexes
+        # draw world, gas giants, text
+        for x in range(1, sector_hex_width + 1):
+            for y in range(1, sector_hex_height + 1):
+                hex_ = f"{x:02}{y:02}"
+                cx = (x + 1) * 3 * scale  # leftmost point
+                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
+                vertexes = []  # start at top left and go clockwise
+                vertexes.append((cx + scale, cy))
+                vertexes.append((cx + 3 * scale, cy))
+                vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
+                vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
+                vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
+                vertexes.append((cx, cy + SQRT3 * scale))
+                center = (cx + 2 * scale, cy + SQRT3 * scale)
+
+                world = sector.hex_to_world.get(hex_)
+                if world:
+                    x1, y1 = world.abs_coords
 
                     # UWP
                     ctx.set_font_size(0.35 * scale)
