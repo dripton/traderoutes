@@ -8,7 +8,6 @@ from __future__ import annotations
 import argparse
 from bisect import bisect_left
 from collections import defaultdict
-from heapq import heappush, heappop
 from math import floor, pi
 import os
 import random
@@ -22,7 +21,6 @@ import xml.etree.ElementTree as ET
 
 import cairo
 import numpy
-from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import floyd_warshall
 
 
