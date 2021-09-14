@@ -337,7 +337,7 @@ def populate_trade_routes() -> None:
         world2.minor_routes.discard(world1)
 
 
-def generate_pdfs():
+def generate_pdfs(output_dir: str) -> None:
     """Generate PDF output for each sector.
 
     Sectors are 32 hexes wide by 40 hexes tall.  Subsectors are 8x10.
@@ -346,10 +346,10 @@ def generate_pdfs():
     The top left hex of a sector is 0101, with 0102 below it.
     """
     for sector in location_to_sector.values():
-        generate_pdf(sector)
+        generate_pdf(sector, output_dir)
 
 
-def generate_pdf(sector):
+def generate_pdf(sector: Sector, output_dir: str) -> None:
     """Generate PDF output for sector.
 
     Sectors are 32 hexes wide by 40 hexes tall.
@@ -381,7 +381,6 @@ def generate_pdf(sector):
 
     width = 25000
     height = 35000
-    output_dir = "/var/tmp"  # TODO command-line option
     output_filename = f"{sector.name}.pdf"
     output_path = os.path.join(output_dir, output_filename)
     scale = 15
@@ -1185,6 +1184,13 @@ def main():
         action="store",
         help="directory for data files",
     )
+    parser.add_argument(
+        "--output-directory",
+        "-o",
+        action="store",
+        help="directory for output files",
+        default="/var/tmp"
+    )
     args = parser.parse_args()
     if args.data_directory:
         data_dir = args.data_directory
@@ -1204,7 +1210,7 @@ def main():
     global navigable_dist_info3
     navigable_dist_info3 = populate_navigable_distances(3)
     populate_trade_routes()
-    generate_pdfs()
+    generate_pdfs(args.output_directory)
 
     if tempdir is not None:
         shutil.rmtree(tempdir)
