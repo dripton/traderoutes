@@ -379,7 +379,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
             ctx.line_to(*center2)
             ctx.stroke()
 
-    width = 25000
+    width = 25000  # TODO maybe have size options
     height = 35000
     output_filename = f"{sector.name}.pdf"
     output_path = os.path.join(output_dir, output_filename)
@@ -389,7 +389,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
     with cairo.PDFSurface(output_path, width, height) as surface:
         ctx = cairo.Context(surface)
         ctx.scale(scale, scale)
-        ctx.set_source_rgba(0, 0, 0, 1)  # black background
+        ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)  # black background
         ctx.rectangle(0, 0, width, height)
         ctx.fill()
         normal_font_face = cairo.ToyFontFace("Sans")
@@ -400,7 +400,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         # sector name
         ctx.set_font_size(3 * scale)
         ctx.set_font_face(bold_font_face)
-        ctx.set_source_rgba(1, 1, 1, 1)  # white
+        ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)  # white
         text = sector.name
         extents = ctx.text_extents(text)
         ctx.move_to(width / scale / 2 - extents.width / 2, 3 * scale)
@@ -424,7 +424,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                 # hexsides
                 ctx.set_line_width(0.03 * scale)
                 ctx.move_to(*vertexes[0])
-                ctx.set_source_rgba(1, 1, 1, 1)  # white
+                ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)  # white
                 for ii in [1, 2, 3, 4, 5, 0]:
                     ctx.line_to(*vertexes[ii])
                 ctx.stroke()
@@ -510,7 +510,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     # UWP
                     ctx.set_font_size(0.35 * scale)
                     ctx.set_font_face(normal_font_face)
-                    ctx.set_source_rgba(1, 1, 1, 1)  # white
+                    ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)  # white
                     text = world.uwp
                     extents = ctx.text_extents(text)
                     ctx.move_to(
@@ -533,9 +533,9 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                         "Cp" in world.trade_classifications
                         or "Cs" in world.trade_classifications
                     ):
-                        ctx.set_source_rgba(1, 0, 0, 1)  # red
+                        ctx.set_source_rgba(1.0, 0.0, 0.0, 1.0)  # red
                     else:
-                        ctx.set_source_rgba(1, 1, 1, 1)  # white
+                        ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)  # white
                     ctx.move_to(
                         cx + 2 * scale - extents.width / 2,
                         cy + SQRT3 * scale * 1.8,
@@ -545,7 +545,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     # World circle
                     if world.size == "0":
                         # Asteroid belt
-                        rgba = (1, 1, 1, 1)  # white
+                        rgba = (1.0, 1.0, 1.0, 1.0)  # white
                         ctx.set_source_rgba(*rgba)
                         num_asteroids = random.randrange(5, 20)
                         for unused in range(num_asteroids):
@@ -574,28 +574,28 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                             "Ri" in world.trade_classifications
                             and "Ag" in world.trade_classifications
                         ):
-                            rgba = (1, 1, 0, 1)  # yellow
+                            rgba = (1.0, 1.0, 0.0, 1.0)  # yellow
                             fill_rgba = rgba
                         elif "Ri" in world.trade_classifications:
-                            rgba = (0.5, 0, 0.5, 1)  # purple
+                            rgba = (0.5, 0.0, 0.5, 1.0)  # purple
                             fill_rgba = rgba
                         elif "Ag" in world.trade_classifications:
-                            rgba = (0, 1, 0, 1)  # green
+                            rgba = (0.0, 1.0, 0.0, 1.0)  # green
                             fill_rgba = rgba
                         elif "In" in world.trade_classifications:
-                            rgba = (0.5, 0.5, 0.5, 1)  # green
+                            rgba = (0.5, 0.5, 0.5, 1.0)  # green
                             fill_rgba = rgba
                         elif world.atmosphere in {"B", "C"}:
-                            rgba = (1, 0.65, 0, 1)  # orange
+                            rgba = (1.0, 0.65, 0.0, 1.0)  # orange
                             fill_rgba = rgba
                         elif world.atmosphere == "0":
-                            rgba = (1, 1, 1, 1)  # white
-                            fill_rgba = (0, 0, 0, 1)  # black
+                            rgba = (1.0, 1.0, 1.0, 1.0)  # white
+                            fill_rgba = (0.0, 0.0, 0.0, 1.0)  # black
                         elif world.hydrosphere != "0":
-                            rgba = (0, 0, 1, 1)  # blue
+                            rgba = (0.0, 0.0, 1.0, 1.0)  # blue
                             fill_rgba = rgba
                         else:
-                            rgba = (1, 1, 1, 1)  # white
+                            rgba = (1.0, 1.0, 1.0, 1.0)  # white
                             fill_rgba = rgba
                         ctx.set_source_rgba(*rgba)
                         ctx.new_sub_path()
@@ -608,14 +608,14 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
 
                     # gas giant
                     if world.gas_giants != "0":
-                        rgba = (1, 1, 1, 1)  # white
+                        rgba = (1.0, 1.0, 1.0, 1.0)  # white
                         ctx.set_source_rgba(*rgba)
                         ctx.new_sub_path()
                         ctx.arc(
                             center[0] + 0.8 * scale,
                             center[1] - 0.8 * scale,
                             0.1 * scale,
-                            0,
+                            0.0,
                             2 * pi,
                         )
                         ctx.set_line_width(0.03 * scale)
@@ -625,9 +625,9 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     # red and amber zones
                     if world.zone in {"R", "A"}:
                         if world.zone == "R":
-                            rgba = (1, 0, 0, 1)  # red
+                            rgba = (1.0, 0.0, 0.0, 1.0)  # red
                         else:
-                            rgba = (1, 1, 0, 1)  # yellow
+                            rgba = (1.0, 1.0, 0.0, 1.0)  # yellow
                         ctx.set_source_rgba(*rgba)
                         ctx.new_sub_path()
                         ctx.arc(
@@ -646,7 +646,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                 ctx.set_font_face(normal_font_face)
                 extents = ctx.text_extents(text)
 
-                ctx.set_source_rgba(1, 1, 1, 0.6)  # white
+                ctx.set_source_rgba(1.0, 1.0, 1.0, 0.6)  # white
                 ctx.move_to(
                     cx + 2 * scale - extents.width / 2,
                     cy + SQRT3 * scale * 0.3,
