@@ -147,9 +147,6 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
     Only use jumps of up to max_jump hexes, except along xboat routes.
 
     Must be run after all neighbors are built.
-
-    TODO Skip worlds with no gas giants, water, or class D+ starport.
-    TODO Skip red zone worlds with no gas giants.
     """
     global sorted_worlds
     sorted_worlds = sorted(abs_coords_to_world.values())
@@ -750,13 +747,15 @@ class World:
 
         This must be run after all Sectors and Worlds are mostly initialized.
         """
+        if not self.can_refuel:
+            return
         (x, y) = self.abs_coords
         xx = x - 3
         while xx <= x + 3:
             yy = y - 3
             while yy <= y + 3:
                 world = abs_coords_to_world.get((xx, yy))
-                if world is not None and world != self:
+                if world is not None and world != self and world.can_refuel:
                     distance = self.straight_line_distance(world)
                     if distance == 1:
                         self.neighbors1.add(world)

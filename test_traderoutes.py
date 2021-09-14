@@ -494,7 +494,7 @@ def test_btn(spin, dene, neighbors, navigable_distances):
     assert nutema.btn(margesi) == 5.5
     assert margesi.btn(saarinen) == 5.5
     assert aramis.btn(andor) == 0
-    assert andor.btn(candory) == 8
+    assert andor.btn(candory) == 0
 
 
 def test_passenger_btn(spin, dene, neighbors, navigable_distances):
@@ -533,7 +533,7 @@ def test_passenger_btn(spin, dene, neighbors, navigable_distances):
     assert nutema.passenger_btn(margesi) == 5.5
     assert margesi.passenger_btn(saarinen) == 5.5
     assert aramis.passenger_btn(andor) == 0
-    assert andor.passenger_btn(candory) == 8
+    assert andor.passenger_btn(candory) == 0
 
 
 @pytest.fixture(scope="session")
@@ -677,10 +677,10 @@ def test_navigable_distance(spin, dene, neighbors, navigable_distances):
     assert aramis.navigable_distance(ldd, 2) == 1
     assert aramis.navigable_distance(corfu, 2) == 16
     assert reno.navigable_distance(javan, 2) == 61
-    assert andor.navigable_distance(candory, 2) == 1
-    assert candory.navigable_distance(andor, 2) == 1
+    assert andor.navigable_distance(candory, 2) is None
+    assert candory.navigable_distance(andor, 2) is None
     assert aramis.navigable_distance(andor, 2) is None
-    assert aramis.navigable_distance(andor, 3) == 41
+    assert aramis.navigable_distance(andor, 3) == 45
 
 
 def test_navigable_path(spin, dene, neighbors, navigable_distances):
@@ -741,11 +741,11 @@ def test_navigable_path(spin, dene, neighbors, navigable_distances):
         heya,
         corfu,
     ]
-    assert len(reno.navigable_path(javan, 2)) == 33
-    assert andor.navigable_path(candory, 2) == [candory]
-    assert candory.navigable_path(andor, 2) == [andor]
+    assert len(reno.navigable_path(javan, 2)) == 34
+    assert andor.navigable_path(candory, 2) is None
+    assert candory.navigable_path(andor, 2) is None
     assert aramis.navigable_path(andor, 2) is None
-    assert len(aramis.navigable_path(andor, 3)) == 16
+    assert len(aramis.navigable_path(andor, 3)) == 17
 
 
 def test_worlds_by_wtn(spin, dene):
