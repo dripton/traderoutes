@@ -359,7 +359,6 @@ def generate_pdf(sector):
     The 16 subsectors within the sector are each 8x10.
 
     TODO Global redraw ordering.
-    TODO Sector name
     TODO Subsector names and borders
     TODO Adjacent sector names
     TODO Allegiance borders
@@ -399,6 +398,16 @@ def generate_pdf(sector):
         bold_font_face = cairo.ToyFontFace(
             "Sans", cairo.FontSlant.NORMAL, cairo.FontWeight.BOLD
         )
+
+        # sector name
+        ctx.set_font_size(3 * scale)
+        ctx.set_font_face(bold_font_face)
+        ctx.set_source_rgba(1, 1, 1, 1)  # white
+        text = sector.name
+        extents = ctx.text_extents(text)
+        ctx.move_to(width / scale / 2 - extents.width / 2, 3 * scale)
+        ctx.show_text(text)
+
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_ = f"{x:02}{y:02}"
