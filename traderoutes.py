@@ -148,7 +148,7 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
 
     Must be run after all neighbors are built.
 
-    TODO Skip worlds with no gas giants, water, or starport.
+    TODO Skip worlds with no gas giants, water, or class D+ starport.
     TODO Skip red zone worlds with no gas giants.
     """
     global sorted_worlds
@@ -717,13 +717,13 @@ class World:
             elif field == "[Cx]":
                 self.cultural = value.strip("[]")
             elif field == "N":
-                self.nobles = value.strip()
+                self.nobles = value.strip(" -")
             elif field == "B":
-                for ch in value.strip():
+                for ch in value.strip(" -"):
                     self.bases.add(ch)
             elif field == "Z":
-                self.zone = value.strip()
-                if self.zone == "-":
+                self.zone = value.strip(" -")
+                if not self.zone:
                     self.zone = "G"
             elif field == "PBG":
                 self.pbg = value.strip()
@@ -847,6 +847,13 @@ class World:
     @property
     def gas_giants(self) -> str:
         return self.pbg[2]
+
+    @property
+    def can_refuel(self) -> bool:
+        return (self.gas_giants != "0") or (
+            self.zone != "R"
+            and (self.starport not in {"E", "X"} or self.hydrosphere != "0")
+        )
 
     @property
     def uwtn(self) -> float:
@@ -1189,7 +1196,7 @@ def main():
         "-o",
         action="store",
         help="directory for output files",
-        default="/var/tmp"
+        default="/var/tmp",
     )
     args = parser.parse_args()
     if args.data_directory:

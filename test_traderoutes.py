@@ -162,6 +162,7 @@ def test_world_aramis(spin):
     assert world.uwtn == 3.5
     assert world.wtn_port_modifier == 0.5
     assert world.wtn == 4.0
+    assert world.can_refuel
 
 
 def test_world_regina(spin):
@@ -205,6 +206,109 @@ def test_world_regina(spin):
     assert world.uwtn == 5.0
     assert world.wtn_port_modifier == 0.0
     assert world.wtn == 5.0
+    assert world.can_refuel
+
+
+def test_world_bronze(spin):
+    sector = spin
+    world = sector.hex_to_world["1627"]
+    assert world.sector == spin
+    assert world.name == "Bronze"
+    assert world.hex_ == "1627"
+    assert world.uwp == "E201000-0"
+    assert world.trade_classifications == {"Ba", "Ic", "Re", "Va"}
+    assert world.importance == -3
+    assert world.economic == "200-5"
+    assert world.cultural == "0000"
+    assert world.nobles == ""
+    assert world.bases == set()
+    assert world.zone == "G"
+    assert world.pbg == "010"
+    assert world.worlds == 5
+    assert world.allegiance == "SwCf"
+    assert world.stars == ["M3 V"]
+    assert world.starport == "E"
+    assert world.g_starport == "I"
+    assert world.size == "2"
+    assert world.atmosphere == "0"
+    assert world.hydrosphere == "1"
+    assert world.population == "0"
+    assert world.government == "0"
+    assert world.law_level == "0"
+    assert world.tech_level == "0"
+    assert world.g_tech_level == 2
+    assert world.uwtn == -0.5
+    assert world.wtn_port_modifier == 0.5
+    assert world.wtn == 0.0
+    assert world.can_refuel
+
+
+def test_world_callia(spin):
+    sector = spin
+    world = sector.hex_to_world["1836"]
+    assert world.sector == spin
+    assert world.name == "Callia"
+    assert world.hex_ == "1836"
+    assert world.uwp == "E550852-6"
+    assert world.trade_classifications == {"De", "Po", "Ph"}
+    assert world.importance == -2
+    assert world.economic == "A75-5"
+    assert world.cultural == "4612"
+    assert world.nobles == "Be"
+    assert world.bases == set()
+    assert world.zone == "G"
+    assert world.pbg == "810"
+    assert world.worlds == 11
+    assert world.allegiance == "ImDd"
+    assert world.stars == ["M3 V"]
+    assert world.starport == "E"
+    assert world.g_starport == "I"
+    assert world.size == "5"
+    assert world.atmosphere == "5"
+    assert world.hydrosphere == "0"
+    assert world.population == "8"
+    assert world.government == "5"
+    assert world.law_level == "2"
+    assert world.tech_level == "6"
+    assert world.g_tech_level == 6
+    assert world.uwtn == 4.5
+    assert world.wtn_port_modifier == -1.0
+    assert world.wtn == 3.5
+    assert not world.can_refuel
+
+
+def test_world_candory(spin):
+    sector = spin
+    world = sector.hex_to_world["0336"]
+    assert world.sector == spin
+    assert world.name == "Candory"
+    assert world.hex_ == "0336"
+    assert world.uwp == "C593634-8"
+    assert world.trade_classifications == {"Ni", "An", "Fo", "DroyW"}
+    assert world.importance == -2
+    assert world.economic == "A52-4"
+    assert world.cultural == "4436"
+    assert world.nobles == ""
+    assert world.bases == set()
+    assert world.zone == "R"
+    assert world.pbg == "920"
+    assert world.worlds == 5
+    assert world.allegiance == "ImDd"
+    assert world.stars == ["F6 V", "M3 V"]
+    assert world.starport == "C"
+    assert world.g_starport == "III"
+    assert world.size == "5"
+    assert world.atmosphere == "9"
+    assert world.hydrosphere == "3"
+    assert world.population == "6"
+    assert world.government == "3"
+    assert world.law_level == "4"
+    assert world.tech_level == "8"
+    assert world.g_tech_level == 8
+    assert world.uwtn == 3.5
+    assert world.wtn_port_modifier == 0.0
+    assert world.wtn == 3.5
+    assert not world.can_refuel
 
 
 def test_abs_coords(spin, dene):
