@@ -192,9 +192,6 @@ def populate_trade_routes() -> None:
     The wiki version is more fun so we'll use that.
     """
     # TODO Track endpoint traffic and transient traffic
-    # TODO If there are two routes pick the one with more traffic.
-    # TODO Try to avoid Red and Amber Zones
-    # TODO Try to avoid poor starports
     # TODO Try to avoid worlds of different allegiance
     wtn_worlds = worlds_by_wtn()
 
@@ -800,16 +797,51 @@ class World:
         x1, y1 = self.abs_coords
         return hash(x1) + hash(y1)
 
-    # Impose consistent ordering to make paths predictable.
     def __lt__(self, other):
-        x1, y1 = self.abs_coords
-        x2, y2 = other.abs_coords
-        if x1 < x2:
-            return True
-        elif x1 > x2:
-            return False
+        """Impose consistent ordering to make paths predictable.
+
+        We first look at zones, then trade routes, then starports, then wtn,
+        then we take the most spinward world, then the most coreward world.
+        """
+        if self.zone != other.zone:
+            if self.zone == "G":
+                return True
+            elif other.zone == "G":
+                return False
+            elif self.zone == "A":
+                return True
+            elif other.zone == "A":
+                return False
+        elif len(self.major_routes) != len(other.major_routes):
+            return len(self.major_routes) > len(other.major_routes)
+        elif len(self.main_routes) != len(other.main_routes):
+            return len(self.main_routes) > len(other.main_routes)
+        elif len(self.intermediate_routes) != len(other.intermediate_routes):
+            return len(self.intermediate_routes) > len(
+                other.intermediate_routes
+            )
+        elif len(self.feeder_routes) != len(other.feeder_routes):
+            return len(self.feeder_routes) > len(other.feeder_routes)
+        elif len(self.minor_routes) != len(other.minor_routes):
+            return len(self.minor_routes) > len(other.minor_routes)
+        elif self.starport != other.starport:
+            if other.starport == "?":
+                return True
+            elif self.starport == "?":
+                return False
+            else:
+                return self.starport < other.starport
+        elif self.wtn != other.wtn:
+            return self.wtn > other.wtn
         else:
-            return y1 < y2
+            x1, y1 = self.abs_coords
+            x2, y2 = other.abs_coords
+            if x1 < x2:
+                return True
+            elif x1 > x2:
+                return False
+            else:
+                return y1 < y2
 
     @property
     def starport(self) -> str:
