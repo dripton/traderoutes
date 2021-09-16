@@ -1045,17 +1045,8 @@ class Sector:
         self.location = (x, y)
         name_elements = root_element.findall("Name")
         for name_element in name_elements:
-            if "Lang" not in name_element.attrib:
-                if name_element.text:
-                    self.names.append(name_element.text)
-            else:
-                if name_element.text:
-                    self.names.append(
-                        name_element.text
-                        + " ("
-                        + name_element.attrib["Lang"]
-                        + ")"
-                    )
+            if name_element.text:
+                self.names.append(name_element.text)
         subsectors_element = root_element.find("Subsectors")
         if subsectors_element:
             for subsector_element in subsectors_element.findall("Subsector"):

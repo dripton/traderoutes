@@ -90,7 +90,7 @@ def spin(tempdir, download):
 def test_sector_spin(spin):
     sector = spin
     assert sector.name == "Spinward Marches"
-    assert sector.names == ["Spinward Marches", "Tloql (zh)"]
+    assert sector.names == ["Spinward Marches", "Tloql"]
     assert sector.abbreviation == "Spin"
     assert sector.location == (-4, -1)
     assert len(sector.subsector_letter_to_name) == 16
@@ -115,7 +115,7 @@ def dene(tempdir, download):
 def test_sector_dene(dene):
     sector = dene
     assert sector.name == "Deneb"
-    assert sector.names == ["Deneb", "Nieklsdia (zh)"]
+    assert sector.names == ["Deneb", "Nieklsdia"]
     assert sector.abbreviation == "Dene"
     assert sector.location == (-3, -1)
     assert len(sector.subsector_letter_to_name) == 16
