@@ -678,7 +678,11 @@ class World:
             elif field == "Remarks":
                 self.trade_classifications = set(value.strip().split())
             elif field == "{Ix}":
-                self.importance = int(value.strip("{} "))
+                stripped_field = value.strip("{} ")
+                if stripped_field:
+                    self.importance = int(stripped_field)
+                else:
+                    self.importance = 0
             elif field == "(Ex)":
                 self.economic = value.strip("()")
             elif field == "[Cx]":
@@ -695,7 +699,11 @@ class World:
             elif field == "PBG":
                 self.pbg = value.strip()
             elif field == "W":
-                self.worlds = int(value.strip())
+                stripped_field = value.strip("{} ")
+                if stripped_field:
+                    self.worlds = int(stripped_field)
+                else:
+                    self.worlds = 0
             elif field == "A":
                 self.allegiance = value
             elif field == "Stellar":
@@ -770,7 +778,10 @@ class World:
 
     @property
     def g_starport(self) -> str:
-        return starport_traveller_to_gurps[self.uwp[0]]
+        if self.uwp[0].isalpha():
+            return starport_traveller_to_gurps[self.uwp[0]]
+        else:
+            return "0"
 
     @property
     def size(self) -> str:
@@ -806,7 +817,10 @@ class World:
 
     @property
     def g_tech_level(self) -> int:
-        tech_level_int = int(self.tech_level, 17)
+        if self.tech_level.isalnum():
+            tech_level_int = int(self.tech_level, 17)
+        else:
+            tech_level_int = 0
         return tech_level_traveller_to_gurps[tech_level_int]
 
     @property
@@ -827,7 +841,10 @@ class World:
     @property
     def uwtn(self) -> float:
         tl_mod = (self.g_tech_level // 3) / 2 - 0.5
-        pop_mod = int(self.population, 16) / 2
+        if self.population.isalnum():
+            pop_mod = int(self.population, 16) / 2
+        else:
+            pop_mod = 0
         return tl_mod + pop_mod
 
     @property
