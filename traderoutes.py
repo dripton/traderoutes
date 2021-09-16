@@ -379,7 +379,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
     def init_vars():
         hex_ = f"{x:02}{y:02}"
         cx = (x + 1) * 3 * scale  # leftmost point
-        cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
+        cy = (3 + y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
         vertexes = []  # start at top left and go clockwise
         vertexes.append((cx + scale, cy))
         vertexes.append((cx + 3 * scale, cy))
@@ -415,7 +415,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)  # white
         text = sector.name
         extents = ctx.text_extents(text)
-        ctx.move_to(width / scale / 2 - extents.width / 2, 3 * scale)
+        ctx.move_to(width / scale / 4 - extents.width / 2, 3 * scale)
         ctx.show_text(text)
 
         # first pass through hexes; draw hexsides
