@@ -356,7 +356,6 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
     The 16 subsectors within the sector are each 8x10.
 
     TODO Subsector names and borders
-    TODO Adjacent sector names
     TODO Allegiance borders
     TODO Bases
     TODO Research stations
@@ -378,7 +377,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
 
     def init_vars():
         hex_ = f"{x:02}{y:02}"
-        cx = (x + 1) * 3 * scale  # leftmost point
+        cx = (4 + x) * 3 * scale  # leftmost point
         cy = (3 + y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
         vertexes = []  # start at top left and go clockwise
         vertexes.append((cx + scale, cy))
@@ -391,10 +390,22 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         world = sector.hex_to_world.get(hex_)
         return (hex_, cx, cy, vertexes, center, world)
 
+    def draw_neighboring_sector_name(neighbor_location, x_pos, y_pos):
+        # TODO Vertical text on the left and right sides would save space.
+        neighbor_sector = location_to_sector.get(neighbor_location)
+        if neighbor_sector is not None:
+            ctx.set_font_size(scale)
+            ctx.set_font_face(normal_font_face)
+            ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)  # white
+            text = neighbor_sector.name
+            extents = ctx.text_extents(text)
+            ctx.move_to(x_pos - extents.width / 2, y_pos - extents.height / 2)
+            ctx.show_text(text)
+
     scale = 15
     sector_hex_width = 32
     sector_hex_height = 40
-    width = 50 * sector_hex_width * scale
+    width = 60 * sector_hex_width * scale
     height = 35 * SQRT3 * sector_hex_height * scale
     output_filename = f"{sector.name}.pdf"
     output_path = os.path.join(output_dir, output_filename)
@@ -417,6 +428,33 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         extents = ctx.text_extents(text)
         ctx.move_to(width / scale / 4 - extents.width / 2, 3 * scale)
         ctx.show_text(text)
+
+        # neighboring sector names, if known
+
+        # coreward (up)
+        draw_neighboring_sector_name(
+            (sector.location[0], sector.location[1] - 1),
+            width / scale / 2,
+            6 * scale,
+        )
+        # spinward (left)
+        draw_neighboring_sector_name(
+            (sector.location[0] - 1, sector.location[1]),
+            5 * scale,
+            height / scale / 2,
+        )
+        # trailing (right)
+        draw_neighboring_sector_name(
+            (sector.location[0] + 1, sector.location[1]),
+            width / scale - 2 * scale,
+            height / scale / 2,
+        )
+        # rimward (down)
+        draw_neighboring_sector_name(
+            (sector.location[0], sector.location[1] + 1),
+            width / scale / 2,
+            height / scale - 6 * scale,
+        )
 
         # first pass through hexes; draw hexsides
         for x in range(1, sector_hex_width + 1):
