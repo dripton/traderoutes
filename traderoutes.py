@@ -376,13 +376,28 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
             ctx.line_to(*center2)
             ctx.stroke()
 
-    width = 25000  # TODO maybe have size options
-    height = 35000
-    output_filename = f"{sector.name}.pdf"
-    output_path = os.path.join(output_dir, output_filename)
+    def init_vars():
+        hex_ = f"{x:02}{y:02}"
+        cx = (x + 1) * 3 * scale  # leftmost point
+        cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
+        vertexes = []  # start at top left and go clockwise
+        vertexes.append((cx + scale, cy))
+        vertexes.append((cx + 3 * scale, cy))
+        vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
+        vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
+        vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
+        vertexes.append((cx, cy + SQRT3 * scale))
+        center = (cx + 2 * scale, cy + SQRT3 * scale)
+        world = sector.hex_to_world.get(hex_)
+        return (hex_, cx, cy, vertexes, center, world)
+
     scale = 15
     sector_hex_width = 32
     sector_hex_height = 40
+    width = 50 * sector_hex_width * scale
+    height = 35 * SQRT3 * sector_hex_height * scale
+    output_filename = f"{sector.name}.pdf"
+    output_path = os.path.join(output_dir, output_filename)
     with cairo.PDFSurface(output_path, width, height) as surface:
         ctx = cairo.Context(surface)
         ctx.scale(scale, scale)
@@ -406,17 +421,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         # first pass through hexes; draw hexsides
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
-                hex_ = f"{x:02}{y:02}"
-                cx = (x + 1) * 3 * scale  # leftmost point
-                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
-                vertexes = []  # start at top left and go clockwise
-                vertexes.append((cx + scale, cy))
-                vertexes.append((cx + 3 * scale, cy))
-                vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
-                vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
-                vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
-                vertexes.append((cx, cy + SQRT3 * scale))
-                center = (cx + 2 * scale, cy + SQRT3 * scale)
+                hex_, cx, cy, vertexes, center, world = init_vars()
 
                 # hexsides
                 ctx.set_line_width(0.03 * scale)
@@ -429,19 +434,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         # second pass through hexes; draw Xboat routes
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
-                hex_ = f"{x:02}{y:02}"
-                cx = (x + 1) * 3 * scale  # leftmost point
-                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
-                vertexes = []  # start at top left and go clockwise
-                vertexes.append((cx + scale, cy))
-                vertexes.append((cx + 3 * scale, cy))
-                vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
-                vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
-                vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
-                vertexes.append((cx, cy + SQRT3 * scale))
-                center = (cx + 2 * scale, cy + SQRT3 * scale)
-
-                world = sector.hex_to_world.get(hex_)
+                hex_, cx, cy, vertexes, center, world = init_vars()
                 if world:
                     x1, y1 = world.abs_coords
 
@@ -451,19 +444,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         # third pass through hexes; draw trade routes
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
-                hex_ = f"{x:02}{y:02}"
-                cx = (x + 1) * 3 * scale  # leftmost point
-                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
-                vertexes = []  # start at top left and go clockwise
-                vertexes.append((cx + scale, cy))
-                vertexes.append((cx + 3 * scale, cy))
-                vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
-                vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
-                vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
-                vertexes.append((cx, cy + SQRT3 * scale))
-                center = (cx + 2 * scale, cy + SQRT3 * scale)
-
-                world = sector.hex_to_world.get(hex_)
+                hex_, cx, cy, vertexes, center, world = init_vars()
                 if world:
                     x1, y1 = world.abs_coords
 
@@ -488,18 +469,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         # draw world, gas giants, text
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
-                hex_ = f"{x:02}{y:02}"
-                cx = (x + 1) * 3 * scale  # leftmost point
-                cy = (y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
-                vertexes = []  # start at top left and go clockwise
-                vertexes.append((cx + scale, cy))
-                vertexes.append((cx + 3 * scale, cy))
-                vertexes.append((cx + 4 * scale, cy + SQRT3 * scale))
-                vertexes.append((cx + 3 * scale, cy + 2 * SQRT3 * scale))
-                vertexes.append((cx + scale, cy + 2 * SQRT3 * scale))
-                vertexes.append((cx, cy + SQRT3 * scale))
-                center = (cx + 2 * scale, cy + SQRT3 * scale)
-
+                hex_, cx, cy, vertexes, center, world = init_vars()
                 world = sector.hex_to_world.get(hex_)
                 if world:
                     x1, y1 = world.abs_coords
