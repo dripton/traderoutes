@@ -741,11 +741,11 @@ def test_navigable_path(spin, dene, neighbors, navigable_distances):
         heya,
         corfu,
     ]
-    assert len(reno.navigable_path(javan, 2)) == 34
+    assert len(reno.navigable_path(javan, 2)) == 33
     assert andor.navigable_path(candory, 2) is None
     assert candory.navigable_path(andor, 2) is None
     assert aramis.navigable_path(andor, 2) is None
-    assert len(aramis.navigable_path(andor, 3)) == 17
+    assert len(aramis.navigable_path(andor, 3)) == 18
 
 
 def test_worlds_by_wtn(spin, dene):
@@ -765,11 +765,11 @@ def test_populate_trade_routes(spin, dene, trade_routes):
     mora = spin.hex_to_world["3124"]
     assert len(aramis.major_routes) == 0
     assert len(aramis.main_routes) == 0
-    assert len(aramis.intermediate_routes) == 4
-    assert len(aramis.feeder_routes) == 4
-    assert len(aramis.minor_routes) == 2
-    assert len(mora.major_routes) == 0
+    assert len(aramis.intermediate_routes) == 3
+    assert len(aramis.feeder_routes) == 6
+    assert len(aramis.minor_routes) == 1
+    assert len(mora.major_routes) == 2
     assert len(mora.main_routes) == 7
-    assert len(mora.intermediate_routes) == 4
-    assert len(mora.feeder_routes) == 2
+    assert len(mora.intermediate_routes) == 1
+    assert len(mora.feeder_routes) == 3
     assert len(mora.minor_routes) == 0

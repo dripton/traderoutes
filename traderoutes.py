@@ -759,10 +759,10 @@ class World:
         x2, y2 = other.abs_coords
         if x1 < x2:
             return True
-        elif y1 < y2:
-            return True
-        else:
+        elif x1 > x2:
             return False
+        else:
+            return y1 < y2
 
     @property
     def starport(self) -> str:
