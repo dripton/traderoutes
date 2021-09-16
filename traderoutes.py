@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 
 import cairo
 import numpy
-from scipy.sparse.csgraph import floyd_warshall
+from scipy.sparse.csgraph import shortest_path
 
 
 SQRT3 = 3.0 ** 0.5
@@ -147,6 +147,8 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
     Only use jumps of up to max_jump hexes, except along xboat routes.
 
     Must be run after all neighbors are built.
+
+    TODO Option to dump numpy array to json for external processing.
     """
     global sorted_worlds
     sorted_worlds = sorted(abs_coords_to_world.values())
@@ -168,9 +170,11 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
         for neighbor in world.xboat_routes:
             nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
         nd[ii][ii] = 0
+    print(f"starting shortest_path with {len(sorted_worlds)} worlds")
 
-    dist_matrix, predecessors = floyd_warshall(
-        nd, directed=False, return_predecessors=True
+    # TODO benchmark with more sectors and see if FW is still the fastest
+    dist_matrix, predecessors = shortest_path(
+        nd, method="FW", directed=False, return_predecessors=True
     )
     navigable_dist = {}
     for yy, row in enumerate(dist_matrix):
