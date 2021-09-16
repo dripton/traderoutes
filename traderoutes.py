@@ -470,6 +470,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                 ctx.stroke()
 
         # second pass through hexes; draw Xboat routes
+        # TODO Use dashed lines to make trade routes more visible
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
@@ -477,7 +478,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     x1, y1 = world.abs_coords
 
                     # Xboat routes
-                    draw_route(world.xboat_routes, 0.3 * scale, (0, 0, 1, 1))
+                    draw_route(world.xboat_routes, 0.3 * scale, (0.5, 0, 0.5, 1))
 
         # third pass through hexes; draw trade routes
         for x in range(1, sector_hex_width + 1):
