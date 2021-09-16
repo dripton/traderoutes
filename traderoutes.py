@@ -81,6 +81,7 @@ def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
         escaped_sector = urllib.parse.quote(sector_name)
         if not os.path.exists(data_path):
             url = f"https://travellermap.com/data/{escaped_sector}"
+            print(url)
             response = urllib.request.urlopen(url)
             data = response.read()
             with open(data_path, "wb") as fil:
