@@ -634,8 +634,8 @@ def test_neighbors(spin, dene, neighbors):
 
 @pytest.fixture(scope="session")
 def navigable_distances(tempdir, spin, dene, xboat_routes, neighbors):
-    tr.navigable_dist_info2 = tr.populate_navigable_distances(2)
-    tr.navigable_dist_info3 = tr.populate_navigable_distances(3)
+    tr.navigable_dist_info2 = tr.populate_navigable_distances(2, "auto")
+    tr.navigable_dist_info3 = tr.populate_navigable_distances(3, "auto")
 
 
 def test_navigable_distance(spin, dene, neighbors, navigable_distances):

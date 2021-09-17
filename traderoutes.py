@@ -141,7 +141,7 @@ class NavigableDistanceInfo:
         self.predecessors = predecessors
 
 
-def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
+def populate_navigable_distances(max_jump: int, algorithm: str) -> NavigableDistanceInfo:
     """Find minimum distances between all worlds using the Floyd-Warshall
     algorithm.
 
@@ -175,7 +175,7 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
 
     # TODO benchmark with more sectors and see if FW is still the fastest
     dist_matrix, predecessors = shortest_path(
-        nd, method="FW", directed=False, return_predecessors=True
+        nd, method=algorithm, directed=False, return_predecessors=True
     )
     navigable_dist = {}
     for yy, row in enumerate(dist_matrix):
@@ -1251,7 +1251,16 @@ def main():
         help="directory for output files",
         default="/var/tmp",
     )
+    parser.add_argument(
+        "--algorithm",
+        "-a",
+        action="store",
+        help="shortest path algorithm (FW, D, BF, J, or auto)",
+        default="auto",
+    )
     args = parser.parse_args()
+    if args.algorithm not in {"FW", "D", "BF", "J", "auto"}:
+        raise argparse.ArgumentTypeError("Unknown algorithm")
     if args.data_directory:
         data_dir = args.data_directory
         tempdir = None
@@ -1266,9 +1275,9 @@ def main():
         sector.populate_neighbors()
 
     global navigable_dist_info2
-    navigable_dist_info2 = populate_navigable_distances(2)
+    navigable_dist_info2 = populate_navigable_distances(2, args.algorithm)
     global navigable_dist_info3
-    navigable_dist_info3 = populate_navigable_distances(3)
+    navigable_dist_info3 = populate_navigable_distances(3, args.algorithm)
     populate_trade_routes()
     generate_pdfs(args.output_directory)
 
