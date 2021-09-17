@@ -1213,10 +1213,11 @@ class Sector:
                 )
             )
             if start_sector is not None and end_sector is not None:
-                start_world = start_sector.hex_to_world[start_hex]
-                end_world = end_sector.hex_to_world[end_hex]
-                start_world.xboat_routes.add(end_world)
-                end_world.xboat_routes.add(start_world)
+                start_world = start_sector.hex_to_world.get(start_hex)
+                end_world = end_sector.hex_to_world.get(end_hex)
+                if start_world and end_world:
+                    start_world.xboat_routes.add(end_world)
+                    end_world.xboat_routes.add(start_world)
 
     def populate_neighbors(self):
         """Must be called after all Sectors and Worlds are otherwise built."""
