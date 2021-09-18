@@ -141,7 +141,9 @@ class NavigableDistanceInfo:
         self.predecessors = predecessors
 
 
-def populate_navigable_distances(max_jump: int, algorithm: str) -> NavigableDistanceInfo:
+def populate_navigable_distances(
+    max_jump: int, algorithm: str
+) -> NavigableDistanceInfo:
     """Find minimum distances between all worlds using the Floyd-Warshall
     algorithm.
 
@@ -363,19 +365,25 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
     TODO Research stations
     """
 
-    def draw_route(worlds, line_width, rgba):
+    def draw_route(
+        worlds: List[World],
+        line_width: float,
+        rgba: Tuple[float, float, float, float],
+    ):
         for world2 in worlds:
-            x2, y2 = world2.abs_coords
-            delta_x = x2 - x1
-            delta_y = y2 - y1
-            cx2 = cx + delta_x * 3 * scale
-            cy2 = cy + delta_y * 2 * SQRT3 * scale
-            center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
-            ctx.set_line_width(line_width)
-            ctx.set_source_rgba(*rgba)
-            ctx.move_to(*center)
-            ctx.line_to(*center2)
-            ctx.stroke()
+            # only draw routes in one direction
+            if world > world2:
+                x2, y2 = world2.abs_coords
+                delta_x = x2 - x1
+                delta_y = y2 - y1
+                cx2 = cx + delta_x * 3 * scale
+                cy2 = cy + delta_y * 2 * SQRT3 * scale
+                center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+                ctx.set_line_width(line_width)
+                ctx.set_source_rgba(*rgba)
+                ctx.move_to(*center)
+                ctx.line_to(*center2)
+                ctx.stroke()
 
     def init_vars():
         hex_ = f"{x:02}{y:02}"
@@ -472,7 +480,6 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                 ctx.stroke()
 
         # second pass through hexes; draw Xboat routes
-        # TODO Use dashed lines to make trade routes more visible
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
@@ -480,7 +487,11 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     x1, y1 = world.abs_coords
 
                     # Xboat routes
-                    draw_route(world.xboat_routes, 0.3 * scale, (0.5, 0, 0.5, 1))
+                    draw_route(
+                        world.xboat_routes,
+                        0.3 * scale,
+                        (0.5, 0, 0.5, 1),
+                    )
 
         # third pass through hexes; draw trade routes
         for x in range(1, sector_hex_width + 1):
@@ -490,21 +501,15 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     x1, y1 = world.abs_coords
 
                     # Trade routes
+                    draw_route(world.major_routes, 0.09 * scale, (0, 0, 1, 1))
                     draw_route(
-                        world.major_routes, 0.05 * scale, (0, 0, 1, 0.5)
+                        world.main_routes, 0.08 * scale, (0, 0.8, 0.8, 1)
                     )
                     draw_route(
-                        world.main_routes, 0.05 * scale, (0, 0.8, 0.8, 0.5)
+                        world.intermediate_routes, 0.07 * scale, (0, 1, 0, 1)
                     )
-                    draw_route(
-                        world.intermediate_routes, 0.05 * scale, (0, 1, 0, 0.5)
-                    )
-                    draw_route(
-                        world.feeder_routes, 0.05 * scale, (1, 1, 0, 0.5)
-                    )
-                    draw_route(
-                        world.minor_routes, 0.05 * scale, (1, 0, 0, 0.5)
-                    )
+                    draw_route(world.feeder_routes, 0.06 * scale, (1, 1, 0, 1))
+                    draw_route(world.minor_routes, 0.05 * scale, (1, 0, 0, 1))
 
         # fourth pass through hexes
         # draw world, gas giants, text
