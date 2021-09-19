@@ -358,7 +358,6 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
     The top left hex of a sector is 0101, with 0102 below it.
     The 16 subsectors within the sector are each 8x10.
 
-    TODO Subsector names
     TODO Allegiance borders
     TODO Bases
     TODO Research stations
@@ -489,7 +488,27 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
             ctx.line_to(cx2, cy)
             ctx.stroke()
 
-        # draw hexsides
+        # subsector names
+        for row in range(4):
+            for col in range(4):
+                letter = chr((4 * row + col) + ord("A"))
+                subsector_name = sector.subsector_letter_to_name[letter]
+                ctx.set_font_size(3 * scale)
+                ctx.set_font_face(normal_font_face)
+                ctx.set_source_rgba(0.5, 0.5, 0.5, 0.5)  # gray
+                text = subsector_name
+                extents = ctx.text_extents(text)
+                x = 8 * col + 5
+                yy = 10 * row + 5.5
+                cx = (4 + x) * 3 * scale  # leftmost point
+                cy = (5 + yy * 2) * SQRT3 * scale  # topmost point
+                ctx.move_to(
+                    cx - extents.width / 2,
+                    cy - extents.height / 2,
+                )
+                ctx.show_text(text)
+
+        # hexsides
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
@@ -500,7 +519,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     ctx.line_to(*vertexes[ii])
                 ctx.stroke()
 
-        # draw Xboat routes
+        # Xboat routes
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
@@ -512,14 +531,14 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                         (0.5, 0, 0.5, 1),
                     )
 
-        # draw trade routes
+        # trade routes
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
                 if world:
                     x1, y1 = world.abs_coords
                     # Trade routes
-                    # TODO Avoid drawing smaller route that overlaps largr
+                    # TODO Avoid drawing smaller route that overlaps larger
                     # route between different planets on the same line?
                     # ex. Pannet/Loneseda and Icetina/Loneseda
                     draw_route(world.major_routes, 0.09 * scale, (0, 0, 1, 1))
@@ -532,7 +551,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     draw_route(world.feeder_routes, 0.06 * scale, (1, 1, 0, 1))
                     draw_route(world.minor_routes, 0.05 * scale, (1, 0, 0, 1))
 
-        # draw world, gas giants, text
+        # world, gas giants, text
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
