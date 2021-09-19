@@ -519,6 +519,9 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                 if world:
                     x1, y1 = world.abs_coords
                     # Trade routes
+                    # TODO Avoid drawing smaller route that overlaps largr
+                    # route between different planets on the same line?
+                    # ex. Pannet/Loneseda and Icetina/Loneseda
                     draw_route(world.major_routes, 0.09 * scale, (0, 0, 1, 1))
                     draw_route(
                         world.main_routes, 0.08 * scale, (0, 0.8, 0.8, 1)
