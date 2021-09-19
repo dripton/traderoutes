@@ -175,7 +175,6 @@ def populate_navigable_distances(
         nd[ii][ii] = 0
     print(f"starting shortest_path with {len(sorted_worlds)} worlds")
 
-    # TODO benchmark with more sectors and see if FW is still the fastest
     dist_matrix, predecessors = shortest_path(
         nd, method=algorithm, directed=False, return_predecessors=True
     )
@@ -359,7 +358,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
     The top left hex of a sector is 0101, with 0102 below it.
     The 16 subsectors within the sector are each 8x10.
 
-    TODO Subsector names and borders
+    TODO Subsector names
     TODO Allegiance borders
     TODO Bases
     TODO Research stations
@@ -466,12 +465,34 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
             height / scale - 6 * scale,
         )
 
-        # first pass through hexes; draw hexsides
+        # subsector borders
+        ctx.set_line_width(0.03 * scale)
+        ctx.set_source_rgba(0.5, 0.5, 0.5, 1.0)  # gray
+        # vertical lines
+        for x in [1, 9, 17, 25, 33]:
+            cx = (25 / 6 + x) * 3 * scale  # halfway between leftmost 2 points
+            y = 1
+            cy1 = (3 + y * 2) * SQRT3 * scale
+            y = 41
+            cy2 = (3 + y * 2) * SQRT3 * scale
+            ctx.move_to(cx, cy1)
+            ctx.line_to(cx, cy2)
+            ctx.stroke()
+        # horizontal lines
+        for y in [1, 11, 21, 31, 41]:
+            x = 1
+            cy = (3 + y * 2) * SQRT3 * scale
+            cx1 = (25 / 6 + x) * 3 * scale
+            x = 33
+            cx2 = (25 / 6 + x) * 3 * scale
+            ctx.move_to(cx1, cy)
+            ctx.line_to(cx2, cy)
+            ctx.stroke()
+
+        # draw hexsides
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
-
-                # hexsides
                 ctx.set_line_width(0.03 * scale)
                 ctx.move_to(*vertexes[0])
                 ctx.set_source_rgba(1.0, 1.0, 1.0, 1.0)  # white
@@ -479,27 +500,24 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     ctx.line_to(*vertexes[ii])
                 ctx.stroke()
 
-        # second pass through hexes; draw Xboat routes
+        # draw Xboat routes
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
                 if world:
                     x1, y1 = world.abs_coords
-
-                    # Xboat routes
                     draw_route(
                         world.xboat_routes,
                         0.3 * scale,
                         (0.5, 0, 0.5, 1),
                     )
 
-        # third pass through hexes; draw trade routes
+        # draw trade routes
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
                 hex_, cx, cy, vertexes, center, world = init_vars()
                 if world:
                     x1, y1 = world.abs_coords
-
                     # Trade routes
                     draw_route(world.major_routes, 0.09 * scale, (0, 0, 1, 1))
                     draw_route(
@@ -511,7 +529,6 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                     draw_route(world.feeder_routes, 0.06 * scale, (1, 1, 0, 1))
                     draw_route(world.minor_routes, 0.05 * scale, (1, 0, 0, 1))
 
-        # fourth pass through hexes
         # draw world, gas giants, text
         for x in range(1, sector_hex_width + 1):
             for y in range(1, sector_hex_height + 1):
