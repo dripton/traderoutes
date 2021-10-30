@@ -1,6 +1,6 @@
 black
 mypy
 numpy
-pycairo
+pycairo==1.20.1
 pytest
 scipy
