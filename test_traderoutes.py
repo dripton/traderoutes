@@ -1,4 +1,4 @@
-# Run with pytest (or python3.8 -m pytest)
+# Run with pytest (or python3 -m pytest)
 
 import os
 import shutil
