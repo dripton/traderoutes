@@ -55,6 +55,7 @@ tech_level_traveller_to_gurps = {
     14: 11,
     15: 12,
     16: 13,
+    17: 13,
 }
 
 
@@ -939,7 +940,7 @@ class World:
     @property
     def g_tech_level(self) -> int:
         if self.tech_level.isalnum():
-            tech_level_int = int(self.tech_level, 17)
+            tech_level_int = int(self.tech_level, 18)
         else:
             tech_level_int = 0
         return tech_level_traveller_to_gurps[tech_level_int]
