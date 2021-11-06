@@ -1090,7 +1090,7 @@ class World:
 
         If it's not reachable, return None.
         The path should include other but not self.
-        This uses jump-4 only along Xboat routes, and jump-2 otherwise.
+        This uses jump-4 only along Xboat routes, and max_jump otherwise.
         This can only be called after populate_navigable_distances() runs.
         """
         if self == other:
