@@ -9,10 +9,12 @@ import argparse
 from bisect import bisect_left
 from collections import defaultdict
 from functools import cache, cached_property
+import json
 from math import floor, inf, pi
 import os
 import random
 import shutil
+import subprocess
 from sys import maxsize, stdout
 import tempfile
 from time import time
@@ -185,11 +187,47 @@ class NavigableDistanceInfo:
         self.predecessors = predecessors
 
 
-def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
-    """Find minimum distances between all worlds using the Dijkstra
-    algorithm.
+class NumpyEncoder(json.JSONEncoder):
+    """json encoder for numpy types"""
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(
+            obj,
+            (
+                numpy.int_,
+                numpy.intc,
+                numpy.intp,
+                numpy.int8,
+                numpy.int16,
+                numpy.int32,
+                numpy.int64,
+                numpy.uint8,
+                numpy.uint16,
+                numpy.uint32,
+                numpy.uint64,
+            ),
+        ):
+            return int(obj)
+        elif isinstance(
+            obj, (numpy.float_, numpy.float16, numpy.float32, numpy.float64)
+        ):
+            return float(obj)
+        elif isinstance(obj, (numpy.ndarray,)):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+
+def populate_navigable_distances(
+    max_jump: int,
+    algorithm: str,
+    data_dir: Optional[str] = None,
+    apsp_path: Optional[str] = None,
+) -> NavigableDistanceInfo:
+    """Find minimum distances between all worlds using algorithm.
 
     Only use jumps of up to max_jump hexes, except along xboat routes.
+
+    Must be run after all neighbors are built.
     """
     log(f"populate_navigable_distances {max_jump=}")
     assert populate_neighbors_ran
@@ -217,11 +255,39 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
                 edges += 1
         for neighbor in world.xboat_routes:
             nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
-    log(f"shortest_paths {len(sorted_worlds)} worlds {edges=}")
+    worlds = len(sorted_worlds)
+    log(f"shortest_paths {worlds=} {edges=}")
 
-    dist_matrix, predecessors = shortest_path(
-        nd, method="D", directed=False, return_predecessors=True
-    )
+    if algorithm in {"FWMT", "DMT"}:
+        json_filename = f"traderoutes_{worlds}_nd.json"
+        dist_filename = f"traderoutes_{worlds}_dist.json"
+        pred_filename = f"traderoutes_{worlds}_pred.json"
+        assert data_dir is not None
+        json_path = os.path.join(data_dir, json_filename)
+        dist_path = os.path.join(data_dir, dist_filename)
+        pred_path = os.path.join(data_dir, pred_filename)
+        with open(json_path, "w") as json_file:
+            json.dump(nd, json_file, cls=NumpyEncoder)
+        assert apsp_path is not None
+        if algorithm == "FWNT":
+            alg = "fw"
+        else:
+            alg = "d"
+        subprocess.run(
+            [apsp_path, "-a", alg, "-j", json_path, "-d", dist_path, "-p", pred_path], check=True
+        )
+        with open(dist_path) as dist_file:
+            dist_matrix = numpy.asarray(
+                json.load(dist_file)
+            )  # type: numpy.ndarray
+        with open(pred_path) as pred_file:
+            predecessors = numpy.asarray(
+                json.load(pred_file)
+            )  # type: numpy.ndarray
+    else:
+        dist_matrix, predecessors = shortest_path(
+            nd, method=algorithm, directed=False, return_predecessors=True
+        )
     navigable_dist = {}
     for yy, row in enumerate(dist_matrix):
         world1 = index_to_world[yy]
@@ -1199,7 +1265,7 @@ class World:
         world2 = self
         path = [self]
         while True:
-            index = predecessors[other.index][world2.index]
+            index = int(predecessors[other.index][world2.index])
             world2 = sorted_worlds[index]
             path.append(world2)
             if world2 == other:
@@ -1392,10 +1458,26 @@ def main() -> None:
         "-v",
         action="store_true",
     )
+    parser.add_argument(
+        "--algorithm",
+        "-a",
+        action="store",
+        help="shortest path algorithm (FW, D, BF, J, FWMT, DMT, or auto)",
+        default="auto",
+    )
+    parser.add_argument(
+        "--apsp-path",
+        "-p",
+        action="store",
+        help="path to apsp_mt",
+        default=None,
+    )
     args = parser.parse_args()
     global verbose
     verbose = args.verbose
     log("Start")
+    if args.algorithm not in {"FW", "D", "BF", "J", "FWMT", "DMT", "auto"}:
+        raise argparse.ArgumentTypeError("Unknown algorithm")
     if args.data_directory:
         data_dir = args.data_directory
         tempdir = None
@@ -1414,9 +1496,14 @@ def main() -> None:
     populate_neighbors_ran = True
 
     global navigable_dist_info2
-    navigable_dist_info2 = populate_navigable_distances(2)
     global navigable_dist_info3
-    navigable_dist_info3 = populate_navigable_distances(3)
+    navigable_dist_info2 = populate_navigable_distances(
+        2, args.algorithm, data_dir, args.apsp_path
+    )
+    global navigable_dist_info3
+    navigable_dist_info3 = populate_navigable_distances(
+        3, args.algorithm, data_dir, args.apsp_path
+    )
     populate_trade_routes()
     generate_pdfs(args.output_directory)
 
