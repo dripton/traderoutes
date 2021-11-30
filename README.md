@@ -12,16 +12,16 @@ Map data is downloaded from http://travellermap.com
 
 Runtime dependencies:
 
-Python 3.8 or later
-http://travellermap.com if you haven't already downloaded data locally
-scipy for floyd_warshall
-numpy for scipy
-pycairo for PDF drawing
+* Python 3.8 or later
+* http://travellermap.com if you haven't already downloaded data locally
+* scipy for floyd_warshall
+* numpy for scipy
+* pycairo for PDF drawing
 
 
 Development dependencies:
 
-pytest for running unit tests
-mypy for type checking
-black for code formatting
-git and github for version control
+* pytest for running unit tests
+* mypy for type checking
+* black for code formatting
+* git and github for version control
