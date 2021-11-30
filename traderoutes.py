@@ -174,8 +174,10 @@ def populate_navigable_distances(
         for neighbor in world.xboat_routes:
             nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
         nd[ii][ii] = 0
-    print(f"Starting shortest_path with {len(sorted_worlds)} worlds and "
-          f"{max_jump=}")
+    print(
+        f"Starting shortest_path with {len(sorted_worlds)} worlds and "
+        f"{max_jump=}"
+    )
 
     dist_matrix, predecessors = shortest_path(
         nd, method=algorithm, directed=False, return_predecessors=True
