@@ -373,19 +373,17 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         rgba: Tuple[float, float, float, float],
     ):
         for world2 in worlds:
-            # only draw routes in one direction
-            if world > world2:
-                x2, y2 = world2.abs_coords
-                delta_x = x2 - x1
-                delta_y = y2 - y1
-                cx2 = cx + delta_x * 3 * scale
-                cy2 = cy + delta_y * 2 * SQRT3 * scale
-                center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
-                ctx.set_line_width(line_width)
-                ctx.set_source_rgba(*rgba)
-                ctx.move_to(*center)
-                ctx.line_to(*center2)
-                ctx.stroke()
+            x2, y2 = world2.abs_coords
+            delta_x = x2 - x1
+            delta_y = y2 - y1
+            cx2 = cx + delta_x * 3 * scale
+            cy2 = cy + delta_y * 2 * SQRT3 * scale
+            center2 = (cx2 + 2 * scale, cy2 + SQRT3 * scale)
+            ctx.set_line_width(line_width)
+            ctx.set_source_rgba(*rgba)
+            ctx.move_to(*center)
+            ctx.line_to(*center2)
+            ctx.stroke()
 
     def init_vars():
         hex_ = f"{x:02}{y:02}"
