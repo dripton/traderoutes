@@ -10,6 +10,9 @@ import pytest
 import traderoutes as tr
 
 
+sector_names = ["Deneb", "Gvurrdon", "Spinward Marches"]
+
+
 @pytest.fixture(scope="session")
 def tempdir():
     tempdir = tempfile.mkdtemp(prefix="test_traderoutes.py")
@@ -20,12 +23,10 @@ def tempdir():
 @pytest.fixture(scope="session")
 def download(tempdir):
     # Fails if network or travellermap.com is down.
-    sector_names = ["Deneb", "Spinward Marches"]
     tr.download_sector_data(tempdir, sector_names)
 
 
 def test_download_sector_data(tempdir, download):
-    sector_names = ["Deneb", "Spinward Marches"]
     all_filenames = []
     for sector_name in sector_names:
         all_filenames.append(sector_name + ".sec")
@@ -129,6 +130,31 @@ def test_sector_dene(dene):
     assert len(sector.hex_to_world) == 386
     assert sector.hex_to_world["0108"].name == "New Ramma"
     assert sector.hex_to_world["3031"].name == "Asharam"
+
+
+@pytest.fixture(scope="session")
+def gvur(tempdir, download):
+    sector = tr.Sector(tempdir, "Gvurrdon")
+    yield sector
+
+
+def test_sector_gvur(gvur):
+    sector = gvur
+    assert sector.name == "Gvurrdon"
+    assert sector.names == ["Gvurrdon", "Briakqra'"]
+    assert sector.abbreviation == "Gvur"
+    assert sector.location == (-4, -2)
+    assert len(sector.subsector_letter_to_name) == 16
+    assert sector.subsector_letter_to_name["A"] == "Ongvos"
+    assert sector.subsector_letter_to_name["P"] == "Firgr"
+    assert len(sector.allegiance_code_to_name) == 16
+    assert (
+        sector.allegiance_code_to_name["CsIm"]
+        == "Client state, Third Imperium"
+    )
+    assert len(sector.hex_to_world) == 358
+    assert sector.hex_to_world["0104"].name == "Enjtodl"
+    assert sector.hex_to_world["3238"].name == "Oertsous"
 
 
 def test_world_aramis(spin):
@@ -311,7 +337,7 @@ def test_world_candory(spin):
     assert not world.can_refuel
 
 
-def test_abs_coords(spin, dene):
+def test_abs_coords(spin, dene, gvur):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -332,7 +358,7 @@ def test_abs_coords(spin, dene):
     assert regina.abs_coords == (-109, -30)
 
 
-def test_straight_line_distance(spin, dene):
+def test_straight_line_distance(spin, dene, gvur):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -368,7 +394,7 @@ def test_straight_line_distance(spin, dene):
     assert aramis.straight_line_distance(regina) == 12
 
 
-def test_distance_modifier(spin, dene, neighbors, navigable_distances):
+def test_distance_modifier(spin, dene, gvur, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -403,7 +429,7 @@ def test_distance_modifier(spin, dene, neighbors, navigable_distances):
     assert aramis.distance_modifier(andor) == maxsize
 
 
-def test_btn(spin, dene, neighbors, navigable_distances):
+def test_btn(spin, dene, gvur, neighbors, navigable_distances):
     paya = spin.hex_to_world["2509"]
     dhian = spin.hex_to_world["2510"]
     corfu = spin.hex_to_world["2602"]
@@ -497,7 +523,7 @@ def test_btn(spin, dene, neighbors, navigable_distances):
     assert andor.btn(candory) == 0
 
 
-def test_passenger_btn(spin, dene, neighbors, navigable_distances):
+def test_passenger_btn(spin, dene, gvur, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -537,12 +563,13 @@ def test_passenger_btn(spin, dene, neighbors, navigable_distances):
 
 
 @pytest.fixture(scope="session")
-def xboat_routes(tempdir, spin, dene):
+def xboat_routes(tempdir, spin, dene, gvur):
     spin.parse_xml_routes(tempdir)
     dene.parse_xml_routes(tempdir)
+    gvur.parse_xml_routes(tempdir)
 
 
-def test_xboat_routes(spin, dene, xboat_routes):
+def test_xboat_routes(spin, dene, gvur, xboat_routes):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -580,12 +607,13 @@ def test_xboat_routes(spin, dene, xboat_routes):
 
 
 @pytest.fixture(scope="session")
-def neighbors(tempdir, spin, dene, xboat_routes):
+def neighbors(tempdir, spin, dene, gvur, xboat_routes):
     spin.populate_neighbors()
     dene.populate_neighbors()
+    gvur.populate_neighbors()
 
 
-def test_neighbors(spin, dene, neighbors):
+def test_neighbors(spin, dene, gvur, neighbors):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -633,12 +661,12 @@ def test_neighbors(spin, dene, neighbors):
 
 
 @pytest.fixture(scope="session")
-def navigable_distances(tempdir, spin, dene, xboat_routes, neighbors):
+def navigable_distances(tempdir, spin, dene, gvur, xboat_routes, neighbors):
     tr.navigable_dist_info2 = tr.populate_navigable_distances(2, "auto")
     tr.navigable_dist_info3 = tr.populate_navigable_distances(3, "auto")
 
 
-def test_navigable_distance(spin, dene, neighbors, navigable_distances):
+def test_navigable_distance(spin, dene, gvur, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -675,7 +703,7 @@ def test_navigable_distance(spin, dene, neighbors, navigable_distances):
     candory = spin.hex_to_world["0336"]
     assert aramis.navigable_distance(aramis, 2) == 0
     assert aramis.navigable_distance(ldd, 2) == 1
-    assert aramis.navigable_distance(corfu, 2) == 16
+    assert aramis.navigable_distance(corfu, 2) == 15
     assert reno.navigable_distance(javan, 2) == 61
     assert andor.navigable_distance(candory, 2) is None
     assert candory.navigable_distance(andor, 2) is None
@@ -683,7 +711,7 @@ def test_navigable_distance(spin, dene, neighbors, navigable_distances):
     assert aramis.navigable_distance(andor, 3) == 45
 
 
-def test_navigable_path(spin, dene, neighbors, navigable_distances):
+def test_navigable_path(spin, dene, gvur, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
     natoko = spin.hex_to_world["3209"]
@@ -726,19 +754,24 @@ def test_navigable_path(spin, dene, neighbors, navigable_distances):
     javan = dene.hex_to_world["2131"]
     andor = spin.hex_to_world["0236"]
     candory = spin.hex_to_world["0336"]
+    aramanx = spin.hex_to_world["3005"]
+    carsten = spin.hex_to_world["2906"]
+    nasemin = spin.hex_to_world["3003"]
+    pavanne = spin.hex_to_world["2905"]
+    jesedipere = spin.hex_to_world["3001"]
+    rruthaekuksu = gvur.hex_to_world["2840"]
     assert aramis.navigable_path(aramis, 2) == []
     assert aramis.navigable_path(ldd, 2) == [ldd]
     assert ldd.navigable_path(aramis, 2) == [aramis]
     assert aramis.navigable_path(corfu, 2) == [
         pysadi,
         zila,
-        violante,
-        focaline,
-        moughas,
-        enope,
-        becks_world,
-        yorbund,
-        heya,
+        carsten,
+        pavanne,
+        nasemin,
+        jesedipere,
+        rruthaekuksu,
+        lablon,
         corfu,
     ]
     assert len(reno.navigable_path(javan, 2)) == 33
@@ -748,19 +781,19 @@ def test_navigable_path(spin, dene, neighbors, navigable_distances):
     assert len(aramis.navigable_path(andor, 3)) == 17
 
 
-def test_worlds_by_wtn(spin, dene):
+def test_worlds_by_wtn(spin, dene, gvur):
     wtn_worlds = tr.worlds_by_wtn()
-    assert len(wtn_worlds) == 825
+    assert len(wtn_worlds) == 1183
     assert wtn_worlds[0][0] == 6.5
     assert wtn_worlds[-1][0] == -0.5
 
 
 @pytest.fixture(scope="session")
-def trade_routes(tempdir, spin, dene, neighbors, navigable_distances):
+def trade_routes(tempdir, spin, dene, gvur, neighbors, navigable_distances):
     tr.populate_trade_routes()
 
 
-def test_populate_trade_routes(spin, dene, trade_routes):
+def test_populate_trade_routes(spin, dene, gvur, trade_routes):
     aramis = spin.hex_to_world["3110"]
     mora = spin.hex_to_world["3124"]
     assert len(aramis.major_routes) == 0
