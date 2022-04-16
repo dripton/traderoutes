@@ -796,6 +796,13 @@ def trade_routes(tempdir, spin, dene, gvur, neighbors, navigable_distances):
 def test_populate_trade_routes(spin, dene, gvur, trade_routes):
     aramis = spin.hex_to_world["3110"]
     mora = spin.hex_to_world["3124"]
+    jesedipere = spin.hex_to_world["3001"]
+    nasemin = spin.hex_to_world["3003"]
+    junidy = spin.hex_to_world["3202"]
+    rruthaekuksu = gvur.hex_to_world["2840"]
+    roukhagzvaengoer = gvur.hex_to_world["2740"]
+    rugbird = spin.hex_to_world["3102"]
+    lablon = spin.hex_to_world["2701"]
     assert len(aramis.major_routes) == 0
     assert len(aramis.main_routes) == 0
     assert len(aramis.intermediate_routes) == 0
@@ -806,3 +813,16 @@ def test_populate_trade_routes(spin, dene, gvur, trade_routes):
     assert len(mora.intermediate_routes) == 2
     assert len(mora.feeder_routes) == 3
     assert len(mora.minor_routes) == 0
+    assert len(jesedipere.major_routes) == 0
+    assert len(jesedipere.main_routes) == 0
+    assert len(jesedipere.intermediate_routes) == 0
+    assert len(jesedipere.feeder_routes) == 3
+    assert len(jesedipere.minor_routes) == 1
+    assert jesedipere.feeder_routes == {nasemin, junidy, rruthaekuksu}
+    assert jesedipere.minor_routes == {rugbird}
+    assert len(rruthaekuksu.major_routes) == 0
+    assert len(rruthaekuksu.main_routes) == 0
+    assert len(rruthaekuksu.intermediate_routes) == 0
+    assert len(rruthaekuksu.feeder_routes) == 3
+    assert rruthaekuksu.feeder_routes == {roukhagzvaengoer, jesedipere, lablon}
+    assert len(rruthaekuksu.minor_routes) == 0
