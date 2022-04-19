@@ -856,11 +856,11 @@ class World:
         if self.zone != other.zone:
             if self.zone == "G":
                 return True
-            elif other.zone == "G":
+            if other.zone == "G":
                 return False
-            elif self.zone == "A":
+            if self.zone == "A":
                 return True
-            elif other.zone == "A":
+            if other.zone == "A":
                 return False
         elif len(self.major_routes) != len(other.major_routes):
             return len(self.major_routes) > len(other.major_routes)
@@ -877,21 +877,18 @@ class World:
         elif self.starport != other.starport:
             if other.starport == "?":
                 return True
-            elif self.starport == "?":
+            if self.starport == "?":
                 return False
-            else:
-                return self.starport < other.starport
+            return self.starport < other.starport
         elif self.wtn != other.wtn:
             return self.wtn > other.wtn
-        else:
-            x1, y1 = self.abs_coords
-            x2, y2 = other.abs_coords
-            if x1 < x2:
-                return True
-            elif x1 > x2:
-                return False
-            else:
-                return y1 < y2
+        x1, y1 = self.abs_coords
+        x2, y2 = other.abs_coords
+        if x1 < x2:
+            return True
+        if x1 > x2:
+            return False
+        return y1 < y2
 
     @property
     def starport(self) -> str:
@@ -901,8 +898,7 @@ class World:
     def g_starport(self) -> str:
         if self.uwp[0].isalpha():
             return starport_traveller_to_gurps[self.uwp[0]]
-        else:
-            return "0"
+        return "0"
 
     @property
     def size(self) -> str:
@@ -1214,9 +1210,9 @@ class Sector:
                 line = line.strip()
                 if not line:
                     continue
-                elif line.startswith("#"):
+                if line.startswith("#"):
                     continue
-                elif line.startswith("Hex"):
+                if line.startswith("Hex"):
                     header = line
                 elif line.startswith("----"):
                     separator = line
