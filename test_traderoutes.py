@@ -444,7 +444,7 @@ def test_btn(spin, dene, gvur, neighbors, navigable_distances):
     yebab = spin.hex_to_world["3002"]
     nasemin = spin.hex_to_world["3003"]
     zykoca = spin.hex_to_world["3004"]
-    aramanx = spin.hex_to_world["3004"]
+    aramanx = spin.hex_to_world["3005"]
     pysadi = spin.hex_to_world["3008"]
     ldd = spin.hex_to_world["3010"]
     rugbird = spin.hex_to_world["3102"]
