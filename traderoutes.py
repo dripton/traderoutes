@@ -255,11 +255,11 @@ def populate_trade_routes() -> None:
                     for ii in range(len(path) - 1):
                         first = path[ii]
                         second = path[ii + 1]
-                        world_list = sorted(
-                            [first, second]
-                        )  # type: List[World]
-                        world_tuple = tuple(world_list)
-                        route_paths[world_tuple] += 1  # type: ignore
+                        if first <= second:
+                            world_tuple = (first, second)
+                        else:
+                            world_tuple = (second, first)
+                        route_paths[world_tuple] += 1
 
     for unused, world1 in wtn_worlds:
         find_route_paths(major_route_paths, world1.major_routes, 3)
@@ -889,6 +889,9 @@ class World:
         if x1 > x2:
             return False
         return y1 < y2
+
+    def __le__(self, other):
+        return self == other or self < other
 
     @property
     def starport(self) -> str:
