@@ -804,7 +804,6 @@ class World:
                     else:
                         self.stars.append(star + " " + stars[ii + 1])
                         ii += 2
-        global abs_coords_to_world
         abs_coords_to_world[self.abs_coords] = self
 
     def populate_neighbors(self) -> None:
@@ -1204,7 +1203,6 @@ class Sector:
                     self.allegiance_code_to_name[
                         allegiance_code
                     ] = allegiance_name
-        global location_to_sector
         # Set this last, after the sector is as fully built as possible.
         location_to_sector[self.location] = self
 
