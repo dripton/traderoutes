@@ -83,14 +83,14 @@ def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
         if not os.path.exists(data_path):
             url = f"https://travellermap.com/data/{escaped_sector}"
             print(url)
-            response = urllib.request.urlopen(url)
-            data = response.read()
+            with urllib.request.urlopen(url) as response:
+                data = response.read()
             with open(data_path, "wb") as fil:
                 fil.write(data)
         if not os.path.exists(metadata_path):
             url = f"https://travellermap.com/data/{escaped_sector}/metadata"
-            response = urllib.request.urlopen(url)
-            data = response.read()
+            with urllib.request.urlopen(url) as response:
+                data = response.read()
             with open(metadata_path, "wb") as fil:
                 fil.write(data)
 
