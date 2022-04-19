@@ -209,9 +209,9 @@ def populate_trade_routes() -> None:
     wtn_worlds = worlds_by_wtn()
 
     # Add initial endpoint-only routes to both endpoints
-    for ii, (wtn1, world1) in enumerate(wtn_worlds):
+    for ii, (unused, world1) in enumerate(wtn_worlds):
         for jj in range(ii + 1, len(wtn_worlds)):
-            (wtn2, world2) = wtn_worlds[jj]
+            (unused, world2) = wtn_worlds[jj]
             btn = world1.btn(world2)
             if btn >= 12:
                 world1.major_routes.add(world2)
