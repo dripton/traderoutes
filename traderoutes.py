@@ -69,6 +69,7 @@ abs_coords_to_world = {}  # type: Dict[Tuple[float, float], World]
 sorted_worlds = []  # type: List[World]
 
 # Global so we only have to compute these once each
+populate_navigable_distances_ran = False  # type: bool
 navigable_dist_info2 = None  # type Optional[NavigableDistanceInfo]
 navigable_dist_info3 = None  # type Optional[NavigableDistanceInfo]
 
@@ -124,7 +125,7 @@ def same_allegiance(allegiance1: str, allegiance2: str) -> bool:
 
 
 def worlds_by_wtn() -> List[Tuple[float, World]]:
-    """Must be run after navigable distances are built."""
+    assert populate_navigable_distances_ran
     wtn_worlds = []
     for world in sorted_worlds:
         wtn_worlds.append((world.wtn, world))
@@ -188,6 +189,8 @@ def populate_navigable_distances(
         for xx, dist in enumerate(row):
             world2 = index_to_world[xx]
             navigable_dist[world1, world2] = dist
+    global populate_navigable_distances_ran
+    populate_navigable_distances_ran = True
     return NavigableDistanceInfo(navigable_dist, predecessors)
 
 
@@ -1067,11 +1070,8 @@ class World:
         return floor(xdelta + ydelta)
 
     def navigable_distance(self, other: World, max_jump: int) -> Optional[int]:
-        """Return the length of the shortest navigable path from self to other.
-
-        If it's not reachable, return None.
-        This can only be called after populate_navigable_distances() runs.
-        """
+        """Return the length of the shortest navigable path from self to other."""
+        assert populate_navigable_distances_ran
         if max_jump == 2 and navigable_dist_info2 is not None:
             navigable_dist = navigable_dist_info2.navigable_dist
         elif max_jump == 3 and navigable_dist_info3 is not None:
@@ -1089,8 +1089,8 @@ class World:
         If it's not reachable, return None.
         The path should include other but not self.
         This uses jump-4 only along Xboat routes, and max_jump otherwise.
-        This can only be called after populate_navigable_distances() runs.
         """
+        assert populate_navigable_distances_ran
         if self == other:
             return []
         if self.navigable_distance(other, max_jump) is None:
