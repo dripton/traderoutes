@@ -500,7 +500,7 @@ def test_btn(spin, dene, gvur, neighbors, navigable_distances):
     for ii, world1 in enumerate(worlds):
         for jj in range(ii + 1, len(worlds)):
             world2 = worlds[jj]
-            print(world1.name, world2.name, world1.btn(world2))
+            # print(world1.name, world2.name, world1.btn(world2))
     assert aramis.btn(ldd) == 8
     assert aramis.btn(natoko) == 6.5
     assert aramis.btn(reacher) == 7
