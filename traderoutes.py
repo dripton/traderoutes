@@ -162,21 +162,25 @@ def populate_navigable_distances(
         world.index = ii
         index_to_world[ii] = world
     nd = zeros((len(sorted_worlds), len(sorted_worlds)))
+    edges = 0
     for ii, world in enumerate(sorted_worlds):
         if max_jump >= 3:
             for neighbor3 in world.neighbors3:
                 nd[ii][neighbor3.index] = 3
+                edges += 1
         if max_jump >= 2:
             for neighbor2 in world.neighbors2:
                 nd[ii][neighbor2.index] = 2
+                edges += 1
         if max_jump >= 1:
             for neighbor1 in world.neighbors1:
                 nd[ii][neighbor1.index] = 1
+                edges += 1
         for neighbor in world.xboat_routes:
             nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
     print(
         f"Starting shortest_path with {len(sorted_worlds)} worlds and "
-        f"{max_jump=}"
+        f"{max_jump=} {edges=}"
     )
 
     dist_matrix, predecessors = shortest_path(
