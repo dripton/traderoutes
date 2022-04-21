@@ -6,6 +6,7 @@ import stat
 from sys import maxsize
 import tempfile
 
+from numpy import inf
 import pytest
 import traderoutes as tr
 
@@ -426,7 +427,7 @@ def test_distance_modifier(spin, dene, gvur, neighbors, navigable_distances):
     assert aramis.distance_modifier(collace) == 3
     assert collace.distance_modifier(salaam) == 3
     assert raweh.distance_modifier(salaam) == 3.5
-    assert aramis.distance_modifier(andor) == maxsize
+    assert aramis.distance_modifier(andor) == 6.5
 
 
 def test_btn(spin, dene, gvur, neighbors, navigable_distances):
@@ -519,8 +520,8 @@ def test_btn(spin, dene, gvur, neighbors, navigable_distances):
     assert vinorian.btn(nutema) == 6.5
     assert nutema.btn(margesi) == 5.5
     assert margesi.btn(saarinen) == 5.5
-    assert aramis.btn(andor) == 0
-    assert andor.btn(candory) == 0
+    assert aramis.btn(andor) == 2
+    assert andor.btn(candory) == 1.5
 
 
 def test_passenger_btn(spin, dene, gvur, neighbors, navigable_distances):
@@ -558,8 +559,8 @@ def test_passenger_btn(spin, dene, gvur, neighbors, navigable_distances):
     assert vinorian.passenger_btn(nutema) == 6.5
     assert nutema.passenger_btn(margesi) == 5.5
     assert margesi.passenger_btn(saarinen) == 5.5
-    assert aramis.passenger_btn(andor) == 0
-    assert andor.passenger_btn(candory) == 0
+    assert aramis.passenger_btn(andor) == 2.5
+    assert andor.passenger_btn(candory) == 1.5
 
 
 @pytest.fixture(scope="session")
@@ -705,9 +706,9 @@ def test_navigable_distance(spin, dene, gvur, neighbors, navigable_distances):
     assert aramis.navigable_distance(ldd, 2) == 1
     assert aramis.navigable_distance(corfu, 2) == 15
     assert reno.navigable_distance(javan, 2) == 61
-    assert andor.navigable_distance(candory, 2) is None
-    assert candory.navigable_distance(andor, 2) is None
-    assert aramis.navigable_distance(andor, 2) is None
+    assert andor.navigable_distance(candory, 2) == inf
+    assert candory.navigable_distance(andor, 2) == inf
+    assert aramis.navigable_distance(andor, 2) == inf
     assert aramis.navigable_distance(andor, 3) == 45
 
 
@@ -765,20 +766,19 @@ def test_navigable_path(spin, dene, gvur, neighbors, navigable_distances):
     assert ldd.navigable_path(aramis, 2) == [aramis]
     assert aramis.navigable_path(corfu, 2) == [
         pysadi,
-        zila,
-        carsten,
-        pavanne,
+        lewis,
+        aramanx,
         nasemin,
         jesedipere,
         rruthaekuksu,
         lablon,
         corfu,
     ]
-    assert len(reno.navigable_path(javan, 2)) == 33
+    assert len(reno.navigable_path(javan, 2)) == 32
     assert andor.navigable_path(candory, 2) is None
     assert candory.navigable_path(andor, 2) is None
     assert aramis.navigable_path(andor, 2) is None
-    assert len(aramis.navigable_path(andor, 3)) == 17
+    assert len(aramis.navigable_path(andor, 3)) == 16
 
 
 def test_worlds_by_wtn(spin, dene, gvur):
@@ -803,26 +803,32 @@ def test_populate_trade_routes(spin, dene, gvur, trade_routes):
     roukhagzvaengoer = gvur.hex_to_world["2740"]
     rugbird = spin.hex_to_world["3102"]
     lablon = spin.hex_to_world["2701"]
+    yebab = spin.hex_to_world["3002"]
     assert len(aramis.major_routes) == 0
     assert len(aramis.main_routes) == 0
-    assert len(aramis.intermediate_routes) == 0
-    assert len(aramis.feeder_routes) == 8
+    assert len(aramis.intermediate_routes) == 4
+    assert len(aramis.feeder_routes) == 9
     assert len(aramis.minor_routes) == 0
-    assert len(mora.major_routes) == 3
-    assert len(mora.main_routes) == 4
-    assert len(mora.intermediate_routes) == 2
-    assert len(mora.feeder_routes) == 3
+    assert len(mora.major_routes) == 1
+    assert len(mora.main_routes) == 8
+    assert len(mora.intermediate_routes) == 5
+    assert len(mora.feeder_routes) == 0
     assert len(mora.minor_routes) == 0
     assert len(jesedipere.major_routes) == 0
     assert len(jesedipere.main_routes) == 0
     assert len(jesedipere.intermediate_routes) == 0
     assert len(jesedipere.feeder_routes) == 3
-    assert len(jesedipere.minor_routes) == 1
+    assert len(jesedipere.minor_routes) == 2
     assert jesedipere.feeder_routes == {nasemin, junidy, rruthaekuksu}
-    assert jesedipere.minor_routes == {rugbird}
+    assert jesedipere.minor_routes == {rugbird, yebab}
     assert len(rruthaekuksu.major_routes) == 0
     assert len(rruthaekuksu.main_routes) == 0
     assert len(rruthaekuksu.intermediate_routes) == 0
-    assert len(rruthaekuksu.feeder_routes) == 3
-    assert rruthaekuksu.feeder_routes == {roukhagzvaengoer, jesedipere, lablon}
+    assert len(rruthaekuksu.feeder_routes) == 4
+    assert rruthaekuksu.feeder_routes == {
+        roukhagzvaengoer,
+        jesedipere,
+        lablon,
+        rugbird,
+    }
     assert len(rruthaekuksu.minor_routes) == 0

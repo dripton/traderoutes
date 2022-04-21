@@ -20,7 +20,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 import cairo
-import numpy
+from numpy import inf, ndarray, zeros
 from scipy.sparse.csgraph import shortest_path
 
 
@@ -136,7 +136,7 @@ def worlds_by_wtn() -> List[Tuple[float, World]]:
 
 class NavigableDistanceInfo:
     navigable_dist: Dict[Tuple[World, World], int]
-    predecessors: numpy.ndarray
+    predecessors: ndarray
 
     def __init__(self, navigable_dist, predecessors):
         self.navigable_dist = navigable_dist
@@ -161,7 +161,7 @@ def populate_navigable_distances(
     for ii, world in enumerate(sorted_worlds):
         world.index = ii
         index_to_world[ii] = world
-    nd = numpy.full((len(sorted_worlds), len(sorted_worlds)), maxsize)
+    nd = zeros((len(sorted_worlds), len(sorted_worlds)))
     for ii, world in enumerate(sorted_worlds):
         if max_jump >= 3:
             for neighbor3 in world.neighbors3:
@@ -174,7 +174,6 @@ def populate_navigable_distances(
                 nd[ii][neighbor1.index] = 1
         for neighbor in world.xboat_routes:
             nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
-        nd[ii][ii] = 0
     print(
         f"Starting shortest_path with {len(sorted_worlds)} worlds and "
         f"{max_jump=}"
@@ -1070,16 +1069,16 @@ class World:
         return floor(xdelta + ydelta)
 
     def navigable_distance(self, other: World, max_jump: int) -> Optional[int]:
-        """Return the length of the shortest navigable path from self to other."""
+        """Return the length of the shortest navigable path from self to
+        other."""
         assert populate_navigable_distances_ran
-        if max_jump == 2 and navigable_dist_info2 is not None:
-            navigable_dist = navigable_dist_info2.navigable_dist
-        elif max_jump == 3 and navigable_dist_info3 is not None:
+        if max_jump == 3:
+            assert navigable_dist_info3 is not None
             navigable_dist = navigable_dist_info3.navigable_dist
-        dist = navigable_dist[self, other]
-        if dist == maxsize:
-            return None
-        return dist
+        else:
+            assert navigable_dist_info2 is not None
+            navigable_dist = navigable_dist_info2.navigable_dist
+        return navigable_dist[self, other]
 
     def navigable_path(
         self, other: World, max_jump: int
@@ -1093,12 +1092,15 @@ class World:
         assert populate_navigable_distances_ran
         if self == other:
             return []
-        if self.navigable_distance(other, max_jump) is None:
+        dist = self.navigable_distance(other, max_jump)
+        if dist is None or dist == inf:
             return None
-        if max_jump == 2 and navigable_dist_info2 is not None:
-            predecessors = navigable_dist_info2.predecessors
-        elif max_jump == 3 and navigable_dist_info3 is not None:
+        if max_jump == 3:
+            assert navigable_dist_info3 is not None
             predecessors = navigable_dist_info3.predecessors
+        else:
+            assert navigable_dist_info2 is not None
+            predecessors = navigable_dist_info2.predecessors
         world2 = self
         path = []
         while world2 != other:
@@ -1109,8 +1111,6 @@ class World:
 
     def distance_modifier(self, other: World) -> float:
         distance = self.navigable_distance(other, 2)
-        if distance is None:
-            return maxsize
         table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, maxsize]
         index = bisect_left(table, distance)
         return index / 2
