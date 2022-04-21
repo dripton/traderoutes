@@ -1114,6 +1114,7 @@ class World:
         return path
 
     def distance_modifier(self, other: World) -> float:
+        # TODO Should this sometimes use jump-3?
         distance = self.navigable_distance(other, 2)
         table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, maxsize]
         index = bisect_left(table, distance)
