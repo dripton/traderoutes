@@ -416,6 +416,7 @@ def test_distance_modifier(spin, dene, gvur, neighbors, navigable_distances):
     salaam = dene.hex_to_world["3213"]
     raweh = spin.hex_to_world["0139"]
     andor = spin.hex_to_world["0236"]
+    vinorian = spin.hex_to_world["3111"]
     assert aramis.distance_modifier(aramis) == 0
     assert aramis.distance_modifier(ldd) == 0
     assert ldd.distance_modifier(natoko) == 0.5
@@ -425,6 +426,7 @@ def test_distance_modifier(spin, dene, gvur, neighbors, navigable_distances):
     assert aramis.distance_modifier(corfu) == 2
     assert aramis.distance_modifier(mongo) == 2.5
     assert aramis.distance_modifier(collace) == 3
+    assert aramis.distance_modifier(vinorian) == 0
     assert collace.distance_modifier(salaam) == 3
     assert raweh.distance_modifier(salaam) == 3.5
     assert aramis.distance_modifier(andor) == 6.5
@@ -497,10 +499,6 @@ def test_btn(spin, dene, gvur, neighbors, navigable_distances):
         margesi,
         saarinen,
     ]
-    for ii, world1 in enumerate(worlds):
-        for jj in range(ii + 1, len(worlds)):
-            world2 = worlds[jj]
-            # print(world1.name, world2.name, world1.btn(world2))
     assert aramis.btn(ldd) == 8
     assert aramis.btn(natoko) == 6.5
     assert aramis.btn(reacher) == 7
@@ -612,6 +610,7 @@ def neighbors(tempdir, spin, dene, gvur, xboat_routes):
     spin.populate_neighbors()
     dene.populate_neighbors()
     gvur.populate_neighbors()
+    tr.populate_neighbors_ran = True
 
 
 def test_neighbors(spin, dene, gvur, neighbors):
@@ -663,8 +662,8 @@ def test_neighbors(spin, dene, gvur, neighbors):
 
 @pytest.fixture(scope="session")
 def navigable_distances(tempdir, spin, dene, gvur, xboat_routes, neighbors):
-    tr.navigable_dist_info2 = tr.populate_navigable_distances(2, "auto")
-    tr.navigable_dist_info3 = tr.populate_navigable_distances(3, "auto")
+    tr.navigable_dist_info2 = tr.populate_navigable_distances(2)
+    tr.navigable_dist_info3 = tr.populate_navigable_distances(3)
 
 
 def test_navigable_distance(spin, dene, gvur, neighbors, navigable_distances):
@@ -702,14 +701,32 @@ def test_navigable_distance(spin, dene, gvur, neighbors, navigable_distances):
     javan = dene.hex_to_world["2131"]
     andor = spin.hex_to_world["0236"]
     candory = spin.hex_to_world["0336"]
+    pavanne = spin.hex_to_world["2905"]
+    mongo = spin.hex_to_world["1204"]
+    collace = spin.hex_to_world["1237"]
+    salaam = dene.hex_to_world["3213"]
+    raweh = spin.hex_to_world["0139"]
     assert aramis.navigable_distance(aramis, 2) == 0
+    assert aramis.navigable_distance(aramis, 3) == 0
     assert aramis.navigable_distance(ldd, 2) == 1
+    assert aramis.navigable_distance(ldd, 3) == 1
+    assert aramis.navigable_distance(vinorian, 2) == 1
+    assert aramis.navigable_distance(vinorian, 3) == 1
     assert aramis.navigable_distance(corfu, 2) == 15
+    assert aramis.navigable_distance(corfu, 3) == 13
+    assert aramis.navigable_distance(andor, 2) == inf
+    assert aramis.navigable_distance(andor, 3) == 45
+    assert aramis.navigable_distance(margesi, 2) == 3
+    assert aramis.navigable_distance(pavanne, 2) == 6
+    assert aramis.navigable_distance(regina, 2) == 12
+    assert aramis.navigable_distance(mongo, 2) == 22
+    assert aramis.navigable_distance(collace, 2) == 37
     assert reno.navigable_distance(javan, 2) == 61
     assert andor.navigable_distance(candory, 2) == inf
     assert candory.navigable_distance(andor, 2) == inf
-    assert aramis.navigable_distance(andor, 2) == inf
-    assert aramis.navigable_distance(andor, 3) == 45
+    assert ldd.navigable_distance(natoko, 2) == 2
+    assert collace.navigable_distance(salaam, 2) == 59
+    assert raweh.navigable_distance(salaam, 2) == 70
 
 
 def test_navigable_path(spin, dene, gvur, neighbors, navigable_distances):
@@ -741,6 +758,9 @@ def test_navigable_path(spin, dene, gvur, neighbors, navigable_distances):
     henoz = spin.hex_to_world["2912"]
     valhalla = spin.hex_to_world["2811"]
     violante = spin.hex_to_world["2708"]
+    paya = spin.hex_to_world["2509"]
+    yurst = spin.hex_to_world["2309"]
+    yori = spin.hex_to_world["2110"]
     focaline = spin.hex_to_world["2607"]
     moughas = spin.hex_to_world["2406"]
     keng = spin.hex_to_world["2405"]
@@ -761,20 +781,163 @@ def test_navigable_path(spin, dene, gvur, neighbors, navigable_distances):
     pavanne = spin.hex_to_world["2905"]
     jesedipere = spin.hex_to_world["3001"]
     rruthaekuksu = gvur.hex_to_world["2840"]
-    assert aramis.navigable_path(aramis, 2) == []
-    assert aramis.navigable_path(ldd, 2) == [ldd]
-    assert ldd.navigable_path(aramis, 2) == [aramis]
+    galla = gvur.hex_to_world["2940"]
+    gesentown = spin.hex_to_world["0303"]
+    whenge = spin.hex_to_world["0503"]
+    nerewhon = spin.hex_to_world["0704"]
+    narval = spin.hex_to_world["0805"]
+    plaven = spin.hex_to_world["0807"]
+    gougeste = spin.hex_to_world["0909"]
+    zircon = spin.hex_to_world["1110"]
+    tremous_dex = spin.hex_to_world["1311"]
+    tionale = spin.hex_to_world["1511"]
+    extolay = spin.hex_to_world["1711"]
+    _871438 = spin.hex_to_world["1510"]
+    dinomn = spin.hex_to_world["1912"]
+    rech = spin.hex_to_world["2112"]
+    echiete = spin.hex_to_world["2313"]
+    gileden = spin.hex_to_world["2514"]
+    fulacin = spin.hex_to_world["2613"]
+    porozlo = spin.hex_to_world["2715"]
+    jae_tellona = spin.hex_to_world["2814"]
+    belizo = spin.hex_to_world["3015"]
+    kegena = spin.hex_to_world["3016"]
+    cipatwe = spin.hex_to_world["3118"]
+    vanejan = spin.hex_to_world["3119"]
+    bevey = spin.hex_to_world["3216"]
+    tacaxeb = spin.hex_to_world["3218"]
+    vanejen = spin.hex_to_world["3119"]
+    powaza = spin.hex_to_world["3220"]
+    mater_nova = dene.hex_to_world["0221"]
+    rouenet = dene.hex_to_world["0422"]
+    araa = dene.hex_to_world["0623"]
+    tlaza = dene.hex_to_world["0824"]
+    ibix_donora = dene.hex_to_world["0925"]
+    burtrum = dene.hex_to_world["1026"]
+    taburi_nen = dene.hex_to_world["1227"]
+    frisgar = dene.hex_to_world["1025"]
+    bishop = dene.hex_to_world["1226"]
+    kew = dene.hex_to_world["1428"]
+    condamine = dene.hex_to_world["1428"]
+    alaungpaya = dene.hex_to_world["1628"]
+    bisistra = dene.hex_to_world["1829"]
+    turkoman = dene.hex_to_world["1930"]
+    mongo = spin.hex_to_world["1204"]
+    emerald = spin.hex_to_world["1006"]
+    esalin = spin.hex_to_world["1004"]
+    feri = spin.hex_to_world["2005"]
+    uakye = spin.hex_to_world["1805"]
+    efate = spin.hex_to_world["1705"]
+    lysen = spin.hex_to_world["1307"]
+    nakege = spin.hex_to_world["1305"]
+    collace = spin.hex_to_world["1237"]
+    zivije = spin.hex_to_world["2812"]
+    rhylanor = spin.hex_to_world["2716"]
+    equus = spin.hex_to_world["2417"]
+    cogri = spin.hex_to_world["2419"]
+    quiru = spin.hex_to_world["2321"]
+    resten = spin.hex_to_world["2323"]
+    lunion = spin.hex_to_world["2124"]
+    derchon = spin.hex_to_world["2024"]
+    zaibon = spin.hex_to_world["1825"]
+    wardn = spin.hex_to_world["1727"]
+    smoug = spin.hex_to_world["1729"]
+    grote = spin.hex_to_world["1731"]
+    talchek = spin.hex_to_world["1631"]
+    forine = spin.hex_to_world["1533"]
+    tarkine = spin.hex_to_world["1434"]
+    talos = spin.hex_to_world["1436"]
+
+    assert aramis.navigable_path(aramis, 2) == [aramis]
+    assert aramis.navigable_path(ldd, 2) == [aramis, ldd]
+    assert ldd.navigable_path(aramis, 2) == [ldd, aramis]
+    assert aramis.navigable_path(vinorian, 2) == [aramis, vinorian]
     assert aramis.navigable_path(corfu, 2) == [
+        aramis,
         pysadi,
-        lewis,
-        aramanx,
+        zila,
+        carsten,
+        pavanne,
         nasemin,
         jesedipere,
         rruthaekuksu,
         lablon,
         corfu,
     ]
-    assert len(reno.navigable_path(javan, 2)) == 32
+    assert aramis.navigable_path(mongo, 2) == [
+        aramis,
+        pysadi,
+        zila,
+        violante,
+        focaline,
+        moughas,
+        enope,
+        feri,
+        uakye,
+        efate,
+        lysen,
+        nakege,
+        mongo,
+    ]
+    assert aramis.navigable_path(collace, 2) == [
+        aramis,
+        vinorian,
+        henoz,
+        zivije,
+        jae_tellona,
+        rhylanor,
+        equus,
+        cogri,
+        quiru,
+        resten,
+        lunion,
+        derchon,
+        zaibon,
+        wardn,
+        smoug,
+        grote,
+        talchek,
+        forine,
+        tarkine,
+        talos,
+        collace,
+    ]
+    assert reno.navigable_path(javan, 2) == [
+        reno,
+        gesentown,
+        whenge,
+        nerewhon,
+        narval,
+        plaven,
+        gougeste,
+        zircon,
+        tremous_dex,
+        tionale,
+        extolay,
+        dinomn,
+        rech,
+        echiete,
+        gileden,
+        fulacin,
+        jae_tellona,
+        belizo,
+        kegena,
+        cipatwe,
+        vanejen,
+        powaza,
+        mater_nova,
+        rouenet,
+        araa,
+        tlaza,
+        ibix_donora,
+        burtrum,
+        taburi_nen,
+        condamine,
+        alaungpaya,
+        bisistra,
+        turkoman,
+        javan,
+    ]
     assert andor.navigable_path(candory, 2) is None
     assert candory.navigable_path(andor, 2) is None
     assert aramis.navigable_path(andor, 2) is None
@@ -806,20 +969,20 @@ def test_populate_trade_routes(spin, dene, gvur, trade_routes):
     yebab = spin.hex_to_world["3002"]
     assert len(aramis.major_routes) == 0
     assert len(aramis.main_routes) == 0
-    assert len(aramis.intermediate_routes) == 4
+    assert len(aramis.intermediate_routes) == 3
     assert len(aramis.feeder_routes) == 9
     assert len(aramis.minor_routes) == 0
     assert len(mora.major_routes) == 1
-    assert len(mora.main_routes) == 8
-    assert len(mora.intermediate_routes) == 5
+    assert len(mora.main_routes) == 9
+    assert len(mora.intermediate_routes) == 4
     assert len(mora.feeder_routes) == 0
     assert len(mora.minor_routes) == 0
     assert len(jesedipere.major_routes) == 0
     assert len(jesedipere.main_routes) == 0
-    assert len(jesedipere.intermediate_routes) == 0
+    assert len(jesedipere.intermediate_routes) == 1
     assert len(jesedipere.feeder_routes) == 3
     assert len(jesedipere.minor_routes) == 2
-    assert jesedipere.feeder_routes == {nasemin, junidy, rruthaekuksu}
+    assert jesedipere.feeder_routes == {nasemin, lablon, rruthaekuksu}
     assert jesedipere.minor_routes == {rugbird, yebab}
     assert len(rruthaekuksu.major_routes) == 0
     assert len(rruthaekuksu.main_routes) == 0
