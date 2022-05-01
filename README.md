@@ -12,7 +12,7 @@ Map data is downloaded from http://travellermap.com
 
 Runtime dependencies:
 
-* Python 3.8 or later
+* Python 3.9 or later
 * http://travellermap.com if you haven't already downloaded data locally
 * scipy for floyd_warshall
 * numpy for scipy

@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 from bisect import bisect_left
 from collections import defaultdict
+from functools import cached_property
 from math import floor, inf, pi
 import os
 import random
@@ -747,7 +748,6 @@ class World:
     neighbors1: Set[World]
     neighbors2: Set[World]
     neighbors3: Set[World]
-    cached_abs_coords: Tuple[int, float]
     index: Optional[int]
 
     def __init__(
@@ -769,7 +769,6 @@ class World:
         self.neighbors1 = set()
         self.neighbors2 = set()
         self.neighbors3 = set()
-        self.cached_abs_coords = (maxsize, inf)
         self.index = None
         for field, (start, end) in field_to_start_end.items():
             value = line[start:end]
@@ -912,7 +911,7 @@ class World:
     def starport(self) -> str:
         return self.uwp[0]
 
-    @property
+    @cached_property
     def g_starport(self) -> str:
         if self.uwp[0].isalpha():
             return starport_traveller_to_gurps[self.uwp[0]]
@@ -950,7 +949,7 @@ class World:
     def tech_level(self) -> str:
         return self.uwp[8]
 
-    @property
+    @cached_property
     def g_tech_level(self) -> int:
         if self.tech_level.isalnum():
             tech_level_int = int(self.tech_level, 18)
@@ -966,14 +965,14 @@ class World:
     def gas_giants(self) -> str:
         return self.pbg[2]
 
-    @property
+    @cached_property
     def can_refuel(self) -> bool:
         return (self.gas_giants != "0") or (
             self.zone != "R"
             and (self.starport not in {"E", "X"} or self.hydrosphere != "0")
         )
 
-    @property
+    @cached_property
     def uwtn(self) -> float:
         tl_mod = (self.g_tech_level // 3) / 2 - 0.5
         if self.population.isalnum():
@@ -982,7 +981,7 @@ class World:
             pop_mod = 0
         return tl_mod + pop_mod
 
-    @property
+    @cached_property
     def wtn_port_modifier(self) -> float:
         table = {
             (7, "V"): 0.0,
@@ -1037,7 +1036,7 @@ class World:
         iuwtn = max(0, int(self.uwtn))
         return table[(iuwtn, self.g_starport)]
 
-    @property
+    @cached_property
     def wtn(self) -> float:
         return self.uwtn + self.wtn_port_modifier
 
@@ -1065,15 +1064,13 @@ class World:
             result -= 0.5
         return result
 
-    @property
+    @cached_property
     def abs_coords(self) -> Tuple[int, float]:
-        if self.cached_abs_coords == (maxsize, inf):
-            hex_ = self.hex_
-            location = self.sector.location
-            x = int(hex_[:2]) + 32 * location[0]
-            y = int(hex_[2:]) + 40 * location[1] + 0.5 * (x & 1 == 0)
-            self.cached_abs_coords = (x, y)
-        return self.cached_abs_coords
+        hex_ = self.hex_
+        location = self.sector.location
+        x = int(hex_[:2]) + 32 * location[0]
+        y = int(hex_[2:]) + 40 * location[1] + 0.5 * (x & 1 == 0)
+        return x,y
 
     def straight_line_distance(self, other: World) -> int:
         """Return the shortest distance in hexes between the worlds"""
