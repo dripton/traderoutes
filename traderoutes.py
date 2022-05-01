@@ -136,7 +136,7 @@ def worlds_by_wtn() -> List[Tuple[float, World]]:
 
 
 class NavigableDistanceInfo:
-    navigable_dist: Dict[Tuple[World, World], int]
+    navigable_dist: retworkx.AllPairsPathLengthMapping
     paths_map: retworkx.AllPairsPathsMapping
 
     def __init__(self, navigable_dist, paths_map):
@@ -190,18 +190,16 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
         graph, lambda weight: weight
     )
 
-    navigable_dist = {}
-    for ii, inner_dict in paths_map.items():
-        world1 = index_to_world[ii]
-        for jj, path in inner_dict.items():
-            world2 = index_to_world[jj]
-            dist = 0
-            prev_index = None
-            for index in path:
-                if prev_index is not None:
-                    dist += graph.get_edge_data(prev_index, index)
-                prev_index = index
-            navigable_dist[world1, world2] = dist
+    # It's wasteful to run Dijkstra twice, but it seems faster to do that then
+    # to reconstruct the distances from the paths.
+    print(
+        "Starting all_pairs_dijkstra_path_lengths with "
+        f"{len(sorted_worlds)} worlds {max_jump=} edges={graph.num_edges()}"
+    )
+    navigable_dist = retworkx.all_pairs_dijkstra_path_lengths(
+        graph, lambda weight: weight
+    )
+
     global populate_navigable_distances_ran
     populate_navigable_distances_ran = True
     return NavigableDistanceInfo(navigable_dist, paths_map)
@@ -1097,7 +1095,10 @@ class World:
         else:
             assert navigable_dist_info2 is not None
             navigable_dist = navigable_dist_info2.navigable_dist
-        return navigable_dist.get((self, other), inf)
+        try:
+            return navigable_dist[self.index][other.index]
+        except IndexError:
+            return inf
 
     def navigable_path(
         self, other: World, max_jump: int
