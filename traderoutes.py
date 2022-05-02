@@ -16,7 +16,7 @@ import shutil
 from sys import maxsize, stdout
 import tempfile
 from time import time
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -152,7 +152,11 @@ class NavigableDistanceInfo:
     navigable_dist: retworkx.AllPairsPathLengthMapping
     paths_map: retworkx.AllPairsPathsMapping
 
-    def __init__(self, navigable_dist, paths_map):
+    def __init__(
+        self,
+        navigable_dist: retworkx.AllPairsPathLengthMapping,
+        paths_map: retworkx.AllPairsPathMapping,
+    ):
         self.navigable_dist = navigable_dist
         self.paths_map = paths_map
 
@@ -296,7 +300,10 @@ def populate_trade_routes() -> None:
         find_route_paths(feeder_route_paths, world1.feeder_routes, 3)
         find_route_paths(minor_route_paths, world1.minor_routes, 2)
 
-    def promote_routes(smaller_route_paths, bigger_route_paths):
+    def promote_routes(
+        smaller_route_paths: Dict[Tuple[World, World], int],
+        bigger_route_paths: Dict[Tuple[World, World], int],
+    ) -> Tuple[Dict[Tuple[World, World], int], Dict[Tuple[World, World], int]]:
         for (world1, world2), count in smaller_route_paths.items():
             if count >= 3:
                 bigger_route_paths[(world1, world2)] += 1
@@ -396,10 +403,10 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
     """
 
     def draw_route(
-        worlds: List[World],
+        worlds: Set[World],
         line_width: float,
         rgba: Tuple[float, float, float, float],
-    ):
+    ) -> None:
         for world2 in worlds:
             x2, y2 = world2.abs_coords
             delta_x = x2 - x1
@@ -413,7 +420,14 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
             ctx.line_to(*center2)
             ctx.stroke()
 
-    def init_vars():
+    def init_vars() -> Tuple[
+        str,
+        int,
+        float,
+        List[Tuple[int, float]],
+        Tuple[int, float],
+        Optional[World],
+    ]:
         hex_ = f"{x:02}{y:02}"
         cx = (4 + x) * 3 * scale  # leftmost point
         cy = (3 + y * 2 + ((x - 1) & 1)) * SQRT3 * scale  # topmost point
@@ -428,7 +442,9 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
         world = sector.hex_to_world.get(hex_)
         return (hex_, cx, cy, vertexes, center, world)
 
-    def draw_neighboring_sector_name(neighbor_location, x_pos, y_pos):
+    def draw_neighboring_sector_name(
+        neighbor_location: Tuple[int, int], x_pos: float, y_pos: int
+    ) -> None:
         # TODO Vertical text on the left and right sides would save space.
         neighbor_sector = location_to_sector.get(neighbor_location)
         if neighbor_sector is not None:
@@ -865,16 +881,16 @@ class World:
     def __repr__(self) -> str:
         return "World: " + self.name
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if other is None:
             return False
         return self.abs_coords == other.abs_coords
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         x1, y1 = self.abs_coords
         return hash(x1) + hash(y1)
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any) -> bool:
         """Impose consistent ordering to make paths predictable.
 
         We first look at zones, then trade routes, then starports, then wtn,
@@ -917,7 +933,7 @@ class World:
             return False
         return y1 < y2
 
-    def __le__(self, other):
+    def __le__(self, other: Any) -> bool:
         return self == other or self < other
 
     @property
@@ -1191,7 +1207,7 @@ class Sector:
     def __repr__(self) -> str:
         return "Sector: " + self.name
 
-    def parse_xml_metadata(self, data_dir: str, sector_name: str):
+    def parse_xml_metadata(self, data_dir: str, sector_name: str) -> None:
         xml_path = os.path.join(data_dir, sector_name + ".xml")
         tree = ET.parse(xml_path)
         root_element = tree.getroot()
@@ -1234,7 +1250,7 @@ class Sector:
         # Set this last, after the sector is as fully built as possible.
         location_to_sector[self.location] = self
 
-    def parse_column_data(self, data_dir: str, sector_name: str):
+    def parse_column_data(self, data_dir: str, sector_name: str) -> None:
         sector_data_filename = sector_name + ".sec"
         data_path = os.path.join(data_dir, sector_data_filename)
         with open(data_path) as fil:
@@ -1253,7 +1269,7 @@ class Sector:
                     world = World(line, fields, self)
                     self.hex_to_world[world.hex_] = world
 
-    def parse_xml_routes(self, data_dir: str):
+    def parse_xml_routes(self, data_dir: str) -> None:
         """Must be called after all Sectors and Worlds are otherwise built."""
         xml_path = os.path.join(data_dir, self.name + ".xml")
         tree = ET.parse(xml_path)
@@ -1291,17 +1307,17 @@ class Sector:
                     start_world.xboat_routes.add(end_world)
                     end_world.xboat_routes.add(start_world)
 
-    def populate_neighbors(self):
+    def populate_neighbors(self) -> None:
         """Must be called after all Sectors and Worlds are otherwise built."""
         for world in self.hex_to_world.values():
             world.populate_neighbors()
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.names[0]
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--sector",
