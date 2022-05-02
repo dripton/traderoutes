@@ -295,6 +295,7 @@ def populate_trade_routes() -> None:
                             world_tuple = (second, first)
                         route_paths[world_tuple] += 1
 
+    log("Finding route paths")
     for world1 in wtn_worlds:
         find_route_paths(major_route_paths, world1.major_routes, 3)
         find_route_paths(main_route_paths, world1.main_routes, 3)
@@ -319,6 +320,7 @@ def populate_trade_routes() -> None:
                 new_smaller_route_paths[(world1, world2)] = count
         return new_smaller_route_paths, bigger_route_paths
 
+    log("Promoting routes")
     minor_route_paths, feeder_route_paths = promote_routes(
         minor_route_paths, feeder_route_paths
     )
