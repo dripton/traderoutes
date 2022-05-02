@@ -13,8 +13,9 @@ from math import floor, inf, pi
 import os
 import random
 import shutil
-from sys import maxsize
+from sys import maxsize, stdout
 import tempfile
+from time import time
 from typing import Dict, List, Optional, Set, Tuple
 import urllib.parse
 import urllib.request
@@ -59,6 +60,9 @@ TECH_LEVEL_TRAVELLER_TO_GURPS = {
 }
 
 
+# Global for convenience
+verbose = False
+
 # Global to allow any sector to find other sectors
 location_to_sector = {}  # type: Dict[Tuple[int, int], Sector]
 
@@ -76,7 +80,14 @@ navigable_dist_info2 = None  # type Optional[NavigableDistanceInfo]
 navigable_dist_info3 = None  # type Optional[NavigableDistanceInfo]
 
 
+def log(st: str) -> None:
+    if verbose:
+        print(f"{time():14.3f} {st}")
+        stdout.flush()
+
+
 def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
+    log("download_sector_data")
     for sector_name in sector_names:
         sector_data_filename = sector_name + ".sec"
         data_path = os.path.join(data_dir, sector_data_filename)
@@ -85,13 +96,14 @@ def download_sector_data(data_dir: str, sector_names: List[str]) -> None:
         escaped_sector = urllib.parse.quote(sector_name)
         if not os.path.exists(data_path):
             url = f"https://travellermap.com/data/{escaped_sector}"
-            print(url)
+            log(f"downloading {url}")
             with urllib.request.urlopen(url) as response:
                 data = response.read()
             with open(data_path, "wb") as fil:
                 fil.write(data)
         if not os.path.exists(metadata_path):
             url = f"https://travellermap.com/data/{escaped_sector}/metadata"
+            log(f"downloading {url}")
             with urllib.request.urlopen(url) as response:
                 data = response.read()
             with open(metadata_path, "wb") as fil:
@@ -151,6 +163,7 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
 
     Only use jumps of up to max_jump hexes, except along xboat routes.
     """
+    log(f"populate_navigable_distances {max_jump=}")
     assert populate_neighbors_ran
     global sorted_worlds
     if not sorted_worlds:
@@ -182,9 +195,9 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
                 graph.add_edge(
                     ii, neighbor.index, world.straight_line_distance(neighbor)
                 )
-    print(
-        "Starting all_pairs_dijkstra_shortest_paths with "
-        f"{len(sorted_worlds)} worlds {max_jump=} edges={graph.num_edges()}"
+    log(
+        "all_pairs_dijkstra_shortest_paths with "
+        f"{len(sorted_worlds)} worlds edges={graph.num_edges()}"
     )
 
     paths_map = retworkx.all_pairs_dijkstra_shortest_paths(
@@ -193,10 +206,7 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
 
     # It's wasteful to run Dijkstra twice, but it seems faster to do that then
     # to reconstruct the distances from the paths.
-    print(
-        "Starting all_pairs_dijkstra_path_lengths with "
-        f"{len(sorted_worlds)} worlds {max_jump=} edges={graph.num_edges()}"
-    )
+    log("all_pairs_dijkstra_path_lengths")
     navigable_dist = retworkx.all_pairs_dijkstra_path_lengths(
         graph, lambda weight: weight
     )
@@ -216,6 +226,7 @@ def populate_trade_routes() -> None:
                    yellow feeder 9, red minor 8, no line 1-7
     The wiki version is more fun so we'll use that.
     """
+    log("populate_trade_routes")
     # TODO Track endpoint traffic and transient traffic
     # TODO Try to avoid worlds of different allegiance
     wtn_worlds = worlds_by_wtn()
@@ -364,6 +375,7 @@ def generate_pdfs(output_dir: str) -> None:
     Hexes are flat on top and bottom.
     The top left hex of a sector is 0101, with 0102 below it.
     """
+    log("generate_pdfs")
     for sector in location_to_sector.values():
         generate_pdf(sector, output_dir)
 
@@ -1311,7 +1323,15 @@ def main():
         help="directory for output files",
         default="/var/tmp",
     )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+    )
     args = parser.parse_args()
+    global verbose
+    verbose = args.verbose
+    log("Start")
     if args.data_directory:
         data_dir = args.data_directory
         tempdir = None
@@ -1319,8 +1339,10 @@ def main():
         tempdir = tempfile.mkdtemp(prefix="traderoutes.py")
         data_dir = tempdir
     download_sector_data(data_dir, args.sector_names)
+    log("Building sectors")
     for sector_name in args.sector_names:
         sector = Sector(data_dir, sector_name)
+    log("Building routes and neighbors")
     for sector in location_to_sector.values():
         sector.parse_xml_routes(data_dir)
         sector.populate_neighbors()
@@ -1336,6 +1358,7 @@ def main():
 
     if tempdir is not None:
         shutil.rmtree(tempdir)
+    log("Exit")
 
 
 if __name__ == "__main__":
