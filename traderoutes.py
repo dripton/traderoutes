@@ -27,7 +27,7 @@ import retworkx
 SQRT3 = 3.0 ** 0.5
 
 
-starport_traveller_to_gurps = {
+STARPORT_TRAVELLER_TO_GURPS = {
     "A": "V",
     "B": "IV",
     "C": "III",
@@ -37,7 +37,7 @@ starport_traveller_to_gurps = {
 }
 
 
-tech_level_traveller_to_gurps = {
+TECH_LEVEL_TRAVELLER_TO_GURPS = {
     0: 2,  # actually 1-3
     1: 4,
     2: 5,
@@ -914,7 +914,7 @@ class World:
     @cached_property
     def g_starport(self) -> str:
         if self.uwp[0].isalpha():
-            return starport_traveller_to_gurps[self.uwp[0]]
+            return STARPORT_TRAVELLER_TO_GURPS[self.uwp[0]]
         return "0"
 
     @property
@@ -955,7 +955,7 @@ class World:
             tech_level_int = int(self.tech_level, 18)
         else:
             tech_level_int = 0
-        return tech_level_traveller_to_gurps[tech_level_int]
+        return TECH_LEVEL_TRAVELLER_TO_GURPS[tech_level_int]
 
     @property
     def belts(self) -> str:
