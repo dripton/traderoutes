@@ -178,9 +178,8 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
             world.index = ii
             index_to_world[ii] = world
     graph = retworkx.PyGraph(multigraph=False)
-    for ii, world in enumerate(sorted_worlds):
-        nodenum = graph.add_node(world)
-        assert nodenum == ii
+    for ii in range(len(sorted_worlds)):
+        graph.add_node(ii)
     for ii, world in enumerate(sorted_worlds):
         if max_jump >= 3:
             for neighbor in world.neighbors3:
