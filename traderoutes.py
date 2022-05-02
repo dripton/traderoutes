@@ -238,6 +238,11 @@ def populate_trade_routes() -> None:
     for ii, world1 in enumerate(wtn_worlds):
         for jj in range(ii + 1, len(wtn_worlds)):
             world2 = wtn_worlds[jj]
+            if world2.wtn < 3:
+                # BTN can't be more than the lower WTN + 5, so if the lower WTN
+                # is less than 3, we know that world2 and later worlds won't
+                # form any trade routes with world1.
+                break
             btn = world1.btn(world2)
             if btn >= 12:
                 world1.major_routes.add(world2)
