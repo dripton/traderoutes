@@ -138,14 +138,14 @@ def same_allegiance(allegiance1: str, allegiance2: str) -> bool:
     return True
 
 
-def worlds_by_wtn() -> List[Tuple[float, World]]:
+def worlds_sorted_by_wtn() -> List[World]:
     assert populate_navigable_distances_ran
     wtn_worlds = []
     for world in sorted_worlds:
         wtn_worlds.append((world.wtn, world))
     wtn_worlds.sort()
     wtn_worlds.reverse()
-    return wtn_worlds
+    return [world for (wtn, world) in wtn_worlds]
 
 
 class NavigableDistanceInfo:
@@ -232,12 +232,12 @@ def populate_trade_routes() -> None:
     log("populate_trade_routes")
     # TODO Track endpoint traffic and transient traffic
     # TODO Try to avoid worlds of different allegiance
-    wtn_worlds = worlds_by_wtn()
+    wtn_worlds = worlds_sorted_by_wtn()
 
     # Add initial endpoint-only routes to both endpoints
-    for ii, (unused, world1) in enumerate(wtn_worlds):
+    for ii, world1 in enumerate(wtn_worlds):
         for jj in range(ii + 1, len(wtn_worlds)):
-            (unused, world2) = wtn_worlds[jj]
+            world2 = wtn_worlds[jj]
             btn = world1.btn(world2)
             if btn >= 12:
                 world1.major_routes.add(world2)
@@ -290,7 +290,7 @@ def populate_trade_routes() -> None:
                             world_tuple = (second, first)
                         route_paths[world_tuple] += 1
 
-    for unused, world1 in wtn_worlds:
+    for world1 in wtn_worlds:
         find_route_paths(major_route_paths, world1.major_routes, 3)
         find_route_paths(main_route_paths, world1.main_routes, 3)
         find_route_paths(
@@ -329,7 +329,7 @@ def populate_trade_routes() -> None:
 
     # Clear out the initial routes and fill in the full versions.
     # TODO What happens if we skip this and just show initial routes?
-    for unused, world1 in wtn_worlds:
+    for world1 in wtn_worlds:
         world1.major_routes = set()
         world1.main_routes = set()
         world1.intermediate_routes = set()

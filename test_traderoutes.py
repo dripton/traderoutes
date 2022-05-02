@@ -945,10 +945,10 @@ def test_navigable_path(spin, dene, gvur, neighbors, navigable_distances):
 
 
 def test_worlds_by_wtn(spin, dene, gvur):
-    wtn_worlds = tr.worlds_by_wtn()
+    wtn_worlds = tr.worlds_sorted_by_wtn()
     assert len(wtn_worlds) == 1183
-    assert wtn_worlds[0][0] == 6.5
-    assert wtn_worlds[-1][0] == -0.5
+    assert wtn_worlds[0].wtn == 6.5
+    assert wtn_worlds[-1].wtn == -0.5
 
 
 @pytest.fixture(scope="session")
