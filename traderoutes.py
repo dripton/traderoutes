@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse
 from bisect import bisect_left
 from collections import defaultdict
-from functools import cached_property
+from functools import cache, cached_property
 from math import floor, inf, pi
 import os
 import random
@@ -757,6 +757,12 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                 )
                 ctx.show_text(text)
 
+@cache
+def distance_modifier_table(distance: float) -> float:
+    table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, maxsize]
+    index = bisect_left(table, distance)
+    return index / 2
+
 
 class World:
     sector: Sector
@@ -1162,9 +1168,7 @@ class World:
     def distance_modifier(self, other: World) -> float:
         # TODO Should this sometimes use jump-3?
         distance = self.navigable_distance(other, 2)
-        table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, maxsize]
-        index = bisect_left(table, distance)
-        return index / 2
+        return distance_modifier_table(distance)
 
     def btn(self, other: World) -> float:
         min_wtn = min(self.wtn, other.wtn)

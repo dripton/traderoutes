@@ -395,6 +395,35 @@ def test_straight_line_distance(spin, dene, gvur):
     assert aramis.straight_line_distance(regina) == 12
 
 
+def test_distance_modifier_table():
+    assert tr.distance_modifier_table(0) == 0
+    assert tr.distance_modifier_table(1) == 0
+    assert tr.distance_modifier_table(2) == 0.5
+    assert tr.distance_modifier_table(3) == 1
+    assert tr.distance_modifier_table(5) == 1
+    assert tr.distance_modifier_table(6) == 1.5
+    assert tr.distance_modifier_table(9) == 1.5
+    assert tr.distance_modifier_table(10) == 2
+    assert tr.distance_modifier_table(19) == 2
+    assert tr.distance_modifier_table(20) == 2.5
+    assert tr.distance_modifier_table(29) == 2.5
+    assert tr.distance_modifier_table(30) == 3
+    assert tr.distance_modifier_table(59) == 3
+    assert tr.distance_modifier_table(60) == 3.5
+    assert tr.distance_modifier_table(99) == 3.5
+    assert tr.distance_modifier_table(100) == 4
+    assert tr.distance_modifier_table(199) == 4
+    assert tr.distance_modifier_table(200) == 4.5
+    assert tr.distance_modifier_table(299) == 4.5
+    assert tr.distance_modifier_table(300) == 5
+    assert tr.distance_modifier_table(599) == 5
+    assert tr.distance_modifier_table(600) == 5.5
+    assert tr.distance_modifier_table(999) == 5.5
+    assert tr.distance_modifier_table(1000) == 6
+    assert tr.distance_modifier_table(999999) == 6
+    assert tr.distance_modifier_table(maxsize) == 6
+
+
 def test_distance_modifier(spin, dene, gvur, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
     ldd = spin.hex_to_world["3010"]
