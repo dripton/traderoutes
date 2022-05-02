@@ -946,7 +946,7 @@ class World:
     def starport(self) -> str:
         return self.uwp[0]
 
-    @cached_property
+    @property
     def g_starport(self) -> str:
         if self.uwp[0].isalpha():
             return STARPORT_TRAVELLER_TO_GURPS[self.uwp[0]]
@@ -984,7 +984,7 @@ class World:
     def tech_level(self) -> str:
         return self.uwp[8]
 
-    @cached_property
+    @property
     def g_tech_level(self) -> int:
         if self.tech_level.isalnum():
             tech_level_int = int(self.tech_level, 18)
@@ -1007,7 +1007,7 @@ class World:
             and (self.starport not in {"E", "X"} or self.hydrosphere != "0")
         )
 
-    @cached_property
+    @property
     def uwtn(self) -> float:
         tl_mod = (self.g_tech_level // 3) / 2 - 0.5
         if self.population.isalnum():
@@ -1016,7 +1016,7 @@ class World:
             pop_mod = 0
         return tl_mod + pop_mod
 
-    @cached_property
+    @property
     def wtn_port_modifier(self) -> float:
         table = {
             (7, "V"): 0.0,
