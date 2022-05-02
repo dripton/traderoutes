@@ -60,6 +60,30 @@ TECH_LEVEL_TRAVELLER_TO_GURPS = {
 }
 
 
+# The rules don't say that BTN can't be negative, but it seems more
+# reasonable not to go below zero.
+MIN_BTN = 0
+
+MAX_BTN_WTN_DELTA = 5
+
+RI_PBTN_BONUS = 0.5
+CP_PBTN_BONUS = 0.5
+CS_PBTN_BONUS = 0.5
+
+AG_WTCM_BONUS = 0.5
+IN_WTCM_BONUS = 0.5
+MAX_WTCM_BONUS = AG_WTCM_BONUS + IN_WTCM_BONUS
+DIFFERENT_ALLEGIENCE_WTCM_PENALTY = 0.5
+MAX_WTCM_PENALTY = DIFFERENT_ALLEGIENCE_WTCM_PENALTY
+
+
+MAJOR_ROUTE_THRESHOLD = 12
+MAIN_ROUTE_THRESHOLD = 11
+INTERMEDIATE_ROUTE_THRESHOLD = 10
+FEEDER_ROUTE_THRESHOLD = 9
+MINOR_ROUTE_THRESHOLD = 8
+
+
 # Global for convenience
 verbose = False
 
@@ -238,25 +262,45 @@ def populate_trade_routes() -> None:
     for ii, world1 in enumerate(wtn_worlds):
         for jj in range(ii + 1, len(wtn_worlds)):
             world2 = wtn_worlds[jj]
-            if world2.wtn < 3:
-                # BTN can't be more than the lower WTN + 5, so if the lower WTN
-                # is less than 3, we know that world2 and later worlds won't
-                # form any trade routes with world1.
+            if (
+                world2.wtn < MINOR_ROUTE_THRESHOLD - MAX_BTN_WTN_DELTA
+                or world1.wtn + world2.wtn
+                < MINOR_ROUTE_THRESHOLD - MAX_WTCM_BONUS
+            ):
+                # BTN can't be more than the lower WTN + 5, or the sum of the
+                # WTNs plus 1.  So if the lower WTN is less than 3 or the sum
+                # of the WTNs is less than 7, we know that world2 and later
+                # worlds won't form any trade routes with world1.
                 break
+            sld = world1.straight_line_distance(world2)
+            max_btn1 = world1.wtn + world2.wtn - distance_modifier_table(sld)
+            if max_btn1 < MINOR_ROUTE_THRESHOLD - MAX_WTCM_BONUS:
+                # BTN can't be more than the sum of the WTNs plus 1, so if
+                # even the straight line distance modifier puts us below 7,
+                # we can't form any trade routes with world2.
+                continue
+            if max_btn1 < MINOR_ROUTE_THRESHOLD + MAX_WTCM_PENALTY:
+                # Computing the wtcm is cheaper than finding the full BTN
+                wtcm = world1.wtcm(world2)
+                max_btn2 = max_btn1 + wtcm
+                if max_btn2 < MINOR_ROUTE_THRESHOLD:
+                    continue
+            # At this point we have exhausted ways to skip world2 without
+            # computing the BTN.
             btn = world1.btn(world2)
-            if btn >= 12:
+            if btn >= MAJOR_ROUTE_THRESHOLD:
                 world1.major_routes.add(world2)
                 world2.major_routes.add(world1)
-            elif btn >= 11:
+            elif btn >= MAIN_ROUTE_THRESHOLD:
                 world1.main_routes.add(world2)
                 world2.main_routes.add(world1)
-            elif btn >= 10:
+            elif btn >= INTERMEDIATE_ROUTE_THRESHOLD:
                 world1.intermediate_routes.add(world2)
                 world2.intermediate_routes.add(world1)
-            elif btn >= 9:
+            elif btn >= FEEDER_ROUTE_THRESHOLD:
                 world1.feeder_routes.add(world2)
                 world2.feeder_routes.add(world1)
-            elif btn >= 8:
+            elif btn >= MINOR_ROUTE_THRESHOLD:
                 world1.minor_routes.add(world2)
                 world2.minor_routes.add(world1)
 
@@ -757,6 +801,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
                 )
                 ctx.show_text(text)
 
+
 @cache
 def distance_modifier_table(distance: float) -> float:
     table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, maxsize]
@@ -1083,26 +1128,30 @@ class World:
 
     def wtcm(self, other: World) -> float:
         result = 0.0
-        if "Ag" in self.trade_classifications:
-            if (
+        if (
+            "Ag" in self.trade_classifications
+            and (
                 "Ex" in other.trade_classifications
                 or "Na" in other.trade_classifications
-            ):
-                result += 0.5
-        elif "Ag" in other.trade_classifications:
-            if (
+            )
+        ) or (
+            "Ag" in other.trade_classifications
+            and (
                 "Ex" in self.trade_classifications
                 or "Na" in self.trade_classifications
-            ):
-                result += 0.5
-        if "In" in self.trade_classifications:
-            if "Ni" in other.trade_classifications:
-                result += 0.5
-        elif "In" in other.trade_classifications:
-            if "Ni" in self.trade_classifications:
-                result += 0.5
+            )
+        ):
+            result += AG_WTCM_BONUS
+        if (
+            "In" in self.trade_classifications
+            and "Ni" in other.trade_classifications
+        ) or (
+            "In" in other.trade_classifications
+            and "Ni" in self.trade_classifications
+        ):
+            result += IN_WTCM_BONUS
         if not same_allegiance(self.allegiance, other.allegiance):
-            result -= 0.5
+            result -= DIFFERENT_ALLEGIENCE_WTCM_PENALTY
         return result
 
     @cached_property
@@ -1174,9 +1223,7 @@ class World:
         min_wtn = min(self.wtn, other.wtn)
         base_btn = self.wtn + other.wtn + self.wtcm(other)
         btn = base_btn - self.distance_modifier(other)
-        # The rules don't say that BTN can't be negative, but it seems more
-        # reasonable not to go below zero.
-        return max(0, min(btn, min_wtn + 5))
+        return max(MIN_BTN, min(btn, min_wtn + MAX_BTN_WTN_DELTA))
 
     def passenger_btn(self, other: World) -> float:
         min_wtn = min(self.wtn, other.wtn)
@@ -1184,14 +1231,12 @@ class World:
         pbtn = base_btn - self.distance_modifier(other)
         for world in [self, other]:
             if "Ri" in world.trade_classifications:
-                pbtn += 0.5
+                pbtn += RI_PBTN_BONUS
             if "Cp" in world.trade_classifications:
-                pbtn += 0.5
+                pbtn += CP_PBTN_BONUS
             if "Cs" in world.trade_classifications:
-                pbtn += 1.0
-        # The rules don't say that PBTN can't be negative, but it seems more
-        # reasonable not to go below zero.
-        return max(0, min(pbtn, min_wtn + 5))
+                pbtn += CS_PBTN_BONUS
+        return max(MIN_BTN, min(pbtn, min_wtn + MAX_BTN_WTN_DELTA))
 
 
 class Sector:
