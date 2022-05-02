@@ -1083,7 +1083,7 @@ class World:
         location = self.sector.location
         x = int(hex_[:2]) + 32 * location[0]
         y = int(hex_[2:]) + 40 * location[1] + 0.5 * (x & 1 == 0)
-        return x,y
+        return x, y
 
     def straight_line_distance(self, other: World) -> int:
         """Return the shortest distance in hexes between the worlds"""
