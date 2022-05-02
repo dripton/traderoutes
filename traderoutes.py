@@ -322,6 +322,7 @@ def populate_trade_routes() -> None:
     )
 
     # Clear out the initial routes and fill in the full versions.
+    # TODO What happens if we skip this and just show initial routes?
     for unused, world1 in wtn_worlds:
         world1.major_routes = set()
         world1.main_routes = set()
