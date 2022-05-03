@@ -2,4 +2,5 @@ black
 mypy
 pycairo==1.20.1
 pytest
-retworkx==0.11
+numpy
+scipy

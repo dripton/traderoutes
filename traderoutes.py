@@ -22,7 +22,8 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 import cairo
-import retworkx
+import numpy
+from scipy.sparse.csgraph import shortest_path
 
 
 SQRT3 = 3.0 ** 0.5
@@ -95,7 +96,6 @@ abs_coords_to_world = {}  # type: Dict[Tuple[float, float], World]
 
 # Global to have consistent indexes for navigable path computations
 sorted_worlds = []  # type: List[World]
-index_to_world = {}  # type: Dict[int, World]
 
 # Global so we only have to compute these once each
 populate_neighbors_ran = False  # type: bool
@@ -173,16 +173,16 @@ def worlds_sorted_by_wtn() -> List[World]:
 
 
 class NavigableDistanceInfo:
-    navigable_dist: retworkx.AllPairsPathLengthMapping
-    paths_map: retworkx.AllPairsPathsMapping
+    navigable_dist: Dict[Tuple[World, World], int]
+    predecessors: numpy.ndarray
 
     def __init__(
         self,
-        navigable_dist: retworkx.AllPairsPathLengthMapping,
-        paths_map: retworkx.AllPairsPathMapping,
+        navigable_dist: Dict[Tuple[World, World], int],
+        predecessors: numpy.ndarray,
     ):
         self.navigable_dist = navigable_dist
-        self.paths_map = paths_map
+        self.predecessors = predecessors
 
 
 def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
@@ -196,51 +196,42 @@ def populate_navigable_distances(max_jump: int) -> NavigableDistanceInfo:
     global sorted_worlds
     if not sorted_worlds:
         sorted_worlds = sorted(abs_coords_to_world.values())
-    global index_to_world
-    if not index_to_world:
-        for ii, world in enumerate(sorted_worlds):
-            world.index = ii
-            index_to_world[ii] = world
-    graph = retworkx.PyGraph(multigraph=False)
-    for ii in range(len(sorted_worlds)):
-        graph.add_node(ii)
+    index_to_world = {}
+    for ii, world in enumerate(sorted_worlds):
+        world.index = ii
+        index_to_world[ii] = world
+    nd = numpy.zeros((len(sorted_worlds), len(sorted_worlds)))
+    edges = 0
     for ii, world in enumerate(sorted_worlds):
         if max_jump >= 3:
             for neighbor in world.neighbors3:
-                if not graph.has_edge(ii, neighbor.index):
-                    graph.add_edge(ii, neighbor.index, 3)
+                nd[ii][neighbor.index] = 3
+                edges += 1
         if max_jump >= 2:
             for neighbor in world.neighbors2:
-                if not graph.has_edge(ii, neighbor.index):
-                    graph.add_edge(ii, neighbor.index, 2)
+                nd[ii][neighbor.index] = 2
+                edges += 1
         if max_jump >= 1:
             for neighbor in world.neighbors1:
-                if not graph.has_edge(ii, neighbor.index):
-                    graph.add_edge(ii, neighbor.index, 1)
+                nd[ii][neighbor.index] = 1
+                edges += 1
         for neighbor in world.xboat_routes:
-            if not graph.has_edge(ii, neighbor.index):
-                graph.add_edge(
-                    ii, neighbor.index, world.straight_line_distance(neighbor)
-                )
-    log(
-        "all_pairs_dijkstra_shortest_paths with "
-        f"{len(sorted_worlds)} worlds edges={graph.num_edges()}"
-    )
+            nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
+    log(f"shortest_paths {len(sorted_worlds)} worlds {edges=}")
 
-    paths_map = retworkx.all_pairs_dijkstra_shortest_paths(
-        graph, lambda weight: weight
+    dist_matrix, predecessors = shortest_path(
+        nd, method="D", directed=False, return_predecessors=True
     )
-
-    # It's wasteful to run Dijkstra twice, but it seems faster to do that then
-    # to reconstruct the distances from the paths.
-    log("all_pairs_dijkstra_path_lengths")
-    navigable_dist = retworkx.all_pairs_dijkstra_path_lengths(
-        graph, lambda weight: weight
-    )
+    navigable_dist = {}
+    for yy, row in enumerate(dist_matrix):
+        world1 = index_to_world[yy]
+        for xx, dist in enumerate(row):
+            world2 = index_to_world[xx]
+            navigable_dist[world1, world2] = dist
 
     global populate_navigable_distances_ran
     populate_navigable_distances_ran = True
-    return NavigableDistanceInfo(navigable_dist, paths_map)
+    return NavigableDistanceInfo(navigable_dist, predecessors)
 
 
 def populate_trade_routes() -> None:
@@ -1182,10 +1173,7 @@ class World:
         else:
             assert navigable_dist_info2 is not None
             navigable_dist = navigable_dist_info2.navigable_dist
-        try:
-            return navigable_dist[self.index][other.index]
-        except IndexError:
-            return inf
+        return navigable_dist[self, other]
 
     def navigable_path(
         self, other: World, max_jump: int
@@ -1193,7 +1181,7 @@ class World:
         """Return the shortest navigable path from self to other.
 
         If it's not reachable, return None.
-        The path should include other but not self.
+        The path should include both self and other.
         This uses jump-4 only along Xboat routes, and max_jump otherwise.
         """
         assert populate_navigable_distances_ran
@@ -1204,14 +1192,18 @@ class World:
             return None
         if max_jump == 3:
             assert navigable_dist_info3 is not None
-            paths_map = navigable_dist_info3.paths_map
+            predecessors = navigable_dist_info3.predecessors
         else:
             assert navigable_dist_info2 is not None
-            paths_map = navigable_dist_info2.paths_map
-        ii = self.index
-        jj = other.index
-        inner_dict = paths_map[ii]
-        path = [index_to_world[index] for index in inner_dict[jj]]
+            predecessors = navigable_dist_info2.predecessors
+        world2 = self
+        path = [self]
+        while True:
+            index = predecessors[other.index][world2.index]
+            world2 = sorted_worlds[index]
+            path.append(world2)
+            if world2 == other:
+                break
         return path
 
     def distance_modifier(self, other: World) -> float:
