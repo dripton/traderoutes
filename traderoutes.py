@@ -175,15 +175,15 @@ def worlds_sorted_by_wtn() -> List[World]:
 
 
 class NavigableDistanceInfo:
-    navigable_dist: Dict[Tuple[World, World], int]
+    dist_matrix: numpy.ndarray
     predecessors: numpy.ndarray
 
     def __init__(
         self,
-        navigable_dist: Dict[Tuple[World, World], int],
+        dist_matrix: numpy.ndarray,
         predecessors: numpy.ndarray,
     ):
-        self.navigable_dist = navigable_dist
+        self.dist_matrix = dist_matrix
         self.predecessors = predecessors
 
 
@@ -234,10 +234,8 @@ def populate_navigable_distances(
     global sorted_worlds
     if not sorted_worlds:
         sorted_worlds = sorted(abs_coords_to_world.values())
-    index_to_world = {}
-    for ii, world in enumerate(sorted_worlds):
-        world.index = ii
-        index_to_world[ii] = world
+        for ii, world in enumerate(sorted_worlds):
+            world.index = ii
     nd = numpy.zeros((len(sorted_worlds), len(sorted_worlds)))
     edges = 0
     for ii, world in enumerate(sorted_worlds):
@@ -268,14 +266,27 @@ def populate_navigable_distances(
         pred_path = os.path.join(data_dir, pred_filename)
         with open(json_path, "w") as json_file:
             json.dump(nd, json_file, cls=NumpyEncoder)
+        log("Done writing json file")
         assert apsp_path is not None
         if algorithm == "FWNT":
             alg = "fw"
         else:
             alg = "d"
         subprocess.run(
-            [apsp_path, "-a", alg, "-j", json_path, "-d", dist_path, "-p", pred_path], check=True
+            [
+                apsp_path,
+                "-a",
+                alg,
+                "-j",
+                json_path,
+                "-d",
+                dist_path,
+                "-p",
+                pred_path,
+            ],
+            check=True,
         )
+        log("Done running external program")
         with open(dist_path) as dist_file:
             dist_matrix = numpy.asarray(
                 json.load(dist_file)
@@ -284,20 +295,14 @@ def populate_navigable_distances(
             predecessors = numpy.asarray(
                 json.load(pred_file)
             )  # type: numpy.ndarray
+        log("Done reading json results")
     else:
         dist_matrix, predecessors = shortest_path(
             nd, method=algorithm, directed=False, return_predecessors=True
         )
-    navigable_dist = {}
-    for yy, row in enumerate(dist_matrix):
-        world1 = index_to_world[yy]
-        for xx, dist in enumerate(row):
-            world2 = index_to_world[xx]
-            navigable_dist[world1, world2] = dist
-
     global populate_navigable_distances_ran
     populate_navigable_distances_ran = True
-    return NavigableDistanceInfo(navigable_dist, predecessors)
+    return NavigableDistanceInfo(dist_matrix, predecessors)
 
 
 def populate_trade_routes() -> None:
@@ -1235,11 +1240,11 @@ class World:
             return 0
         if max_jump == 3:
             assert navigable_dist_info3 is not None
-            navigable_dist = navigable_dist_info3.navigable_dist
+            dist_matrix = navigable_dist_info3.dist_matrix
         else:
             assert navigable_dist_info2 is not None
-            navigable_dist = navigable_dist_info2.navigable_dist
-        return navigable_dist[self, other]
+            dist_matrix = navigable_dist_info2.dist_matrix
+        return dist_matrix[self.index, other.index]
 
     def navigable_path(
         self, other: World, max_jump: int
