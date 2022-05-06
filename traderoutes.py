@@ -187,36 +187,6 @@ class NavigableDistanceInfo:
         self.predecessors = predecessors
 
 
-class NumpyEncoder(json.JSONEncoder):
-    """json encoder for numpy types"""
-
-    def default(self, obj: Any) -> Any:
-        if isinstance(
-            obj,
-            (
-                numpy.int_,
-                numpy.intc,
-                numpy.intp,
-                numpy.int8,
-                numpy.int16,
-                numpy.int32,
-                numpy.int64,
-                numpy.uint8,
-                numpy.uint16,
-                numpy.uint32,
-                numpy.uint64,
-            ),
-        ):
-            return int(obj)
-        elif isinstance(
-            obj, (numpy.float_, numpy.float16, numpy.float32, numpy.float64)
-        ):
-            return float(obj)
-        elif isinstance(obj, (numpy.ndarray,)):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
-
 def populate_navigable_distances(
     max_jump: int,
     algorithm: str,
@@ -257,16 +227,14 @@ def populate_navigable_distances(
     log(f"shortest_paths {worlds=} {edges=}")
 
     if algorithm in {"FWMT", "DMT"}:
-        json_filename = f"traderoutes_{worlds}_nd.json"
-        dist_filename = f"traderoutes_{worlds}_dist.json"
-        pred_filename = f"traderoutes_{worlds}_pred.json"
+        npy_filename = f"traderoutes_{worlds}_nd.npy"
+        dist_pred_filename = f"traderoutes_{worlds}_distpred.npz"
         assert data_dir is not None
-        json_path = os.path.join(data_dir, json_filename)
-        dist_path = os.path.join(data_dir, dist_filename)
-        pred_path = os.path.join(data_dir, pred_filename)
-        with open(json_path, "w") as json_file:
-            json.dump(nd, json_file, cls=NumpyEncoder)
-        log("Done writing json file")
+        npy_path = os.path.join(data_dir, npy_filename)
+        dist_pred_path = os.path.join(data_dir, dist_pred_filename)
+        with open(npy_path, "wb") as npy_file:
+            numpy.save(npy_file, nd, allow_pickle=False, fix_imports=False)
+        log("Done writing npy file")
         assert apsp_path is not None
         if algorithm == "FWNT":
             alg = "fw"
@@ -277,25 +245,19 @@ def populate_navigable_distances(
                 apsp_path,
                 "-a",
                 alg,
-                "-j",
-                json_path,
-                "-d",
-                dist_path,
-                "-p",
-                pred_path,
+                "-i",
+                npy_path,
+                "-o",
+                dist_pred_path,
             ],
             check=True,
         )
         log("Done running external program")
-        with open(dist_path) as dist_file:
-            dist_matrix = numpy.asarray(
-                json.load(dist_file)
-            )  # type: numpy.ndarray
-        with open(pred_path) as pred_file:
-            predecessors = numpy.asarray(
-                json.load(pred_file)
-            )  # type: numpy.ndarray
-        log("Done reading json results")
+        with open(dist_pred_path, "rb") as dist_pred_file:
+            npz_dict = numpy.load(dist_pred_file)
+            dist_matrix = npz_dict["dist"]
+            predecessors = npz_dict["pred"]
+        log("Done reading npz results")
     else:
         dist_matrix, predecessors = shortest_path(
             nd, method=algorithm, directed=False, return_predecessors=True
