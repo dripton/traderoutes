@@ -14,8 +14,10 @@ Runtime dependencies:
 
 * Python 3.9 or later
 * http://travellermap.com if you haven't already downloaded data locally
-* retworkx for Dijkstra all pairs shortest paths
+* scipy for Dijkstra all pairs shortest paths
+* numpy for fast 2D arrays
 * pycairo for PDF drawing
+* apsp_mt (optional) for much faster Dijkstra all pairs shortest paths
 
 
 Development dependencies:
