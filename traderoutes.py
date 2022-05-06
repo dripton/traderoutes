@@ -236,10 +236,13 @@ def populate_navigable_distances(
             numpy.save(npy_file, nd, allow_pickle=False, fix_imports=False)
         log("Done writing npy file")
         assert apsp_path is not None
-        if algorithm == "FWNT":
+        if algorithm == "FWMT":
             alg = "fw"
-        else:
+        elif algorithm == "DMT":
             alg = "d"
+        else:
+            raise argparse.ArgumentTypeError("Unknown algorithm")
+
         subprocess.run(
             [
                 apsp_path,
