@@ -226,7 +226,7 @@ def populate_navigable_distances(
     worlds = len(sorted_worlds)
     log(f"shortest_paths {worlds=} {edges=}")
 
-    if algorithm in {"FWMT", "DMT"}:
+    if algorithm in {"FWMT", "DMT", "DIALMT"}:
         npy_filename = f"traderoutes_{worlds}_nd.npy"
         dist_pred_filename = f"traderoutes_{worlds}_distpred.npz"
         assert data_dir is not None
@@ -240,6 +240,8 @@ def populate_navigable_distances(
             alg = "fw"
         elif algorithm == "DMT":
             alg = "d"
+        elif algorithm == "DIALMT":
+            alg = "dial"
         else:
             raise argparse.ArgumentTypeError("Unknown algorithm")
 
@@ -1432,7 +1434,7 @@ def main() -> None:
         "--algorithm",
         "-a",
         action="store",
-        help="shortest path algorithm (FW, D, BF, J, FWMT, DMT, or auto)",
+        help="shortest path algorithm (FW, D, BF, J, FWMT, DMT, DIALMT, auto)",
         default="auto",
     )
     parser.add_argument(
@@ -1446,7 +1448,16 @@ def main() -> None:
     global verbose
     verbose = args.verbose
     log("Start")
-    if args.algorithm not in {"FW", "D", "BF", "J", "FWMT", "DMT", "auto"}:
+    if args.algorithm not in {
+        "FW",
+        "D",
+        "BF",
+        "J",
+        "FWMT",
+        "DMT",
+        "DIALMT",
+        "auto",
+    }:
         raise argparse.ArgumentTypeError("Unknown algorithm")
     if args.data_directory:
         data_dir = args.data_directory
