@@ -30,7 +30,6 @@ from scipy.sparse.csgraph import shortest_path
 
 SQRT3 = 3.0 ** 0.5
 
-
 STARPORT_TRAVELLER_TO_GURPS = {
     "A": "V",
     "B": "IV",
@@ -76,8 +75,8 @@ CS_PBTN_BONUS = 0.5
 AG_WTCM_BONUS = 0.5
 IN_WTCM_BONUS = 0.5
 MAX_WTCM_BONUS = AG_WTCM_BONUS + IN_WTCM_BONUS
-DIFFERENT_ALLEGIENCE_WTCM_PENALTY = 0.5
-MAX_WTCM_PENALTY = DIFFERENT_ALLEGIENCE_WTCM_PENALTY
+DIFFERENT_ALLEGIANCE_WTCM_PENALTY = 0.5
+MAX_WTCM_PENALTY = DIFFERENT_ALLEGIANCE_WTCM_PENALTY
 
 
 MAJOR_ROUTE_THRESHOLD = 12
@@ -1180,7 +1179,7 @@ class World:
         ):
             result += IN_WTCM_BONUS
         if not same_allegiance(self.allegiance, other.allegiance):
-            result -= DIFFERENT_ALLEGIENCE_WTCM_PENALTY
+            result -= DIFFERENT_ALLEGIANCE_WTCM_PENALTY
         return result
 
     @cached_property
