@@ -670,6 +670,7 @@ def test_neighbors(spin, dene, gvur, neighbors):
     patinir = spin.hex_to_world["3207"]
     henoz = spin.hex_to_world["2912"]
     valhalla = spin.hex_to_world["2811"]
+    zivije = spin.hex_to_world["2812"]
     suvfoto = dene.hex_to_world["0211"]
     kretikaa = dene.hex_to_world["0209"]
     new_ramma = dene.hex_to_world["0108"]
@@ -686,6 +687,27 @@ def test_neighbors(spin, dene, gvur, neighbors):
         kretikaa,
         new_ramma,
         valhalla,
+    }
+    assert vinorian.neighbors1 == {
+        aramis,
+        ldd,
+        reacher,
+        nutema,
+    }
+    assert vinorian.neighbors2 == {
+        natoko,
+        margesi,
+        henoz,
+    }
+    assert vinorian.neighbors3 == {
+        kretikaa,
+        suvfoto,
+        saarinen,
+        celepina,
+        zivije,
+        valhalla,
+        pysadi,
+        # not huderu, red zone with no gas giants
     }
 
 
