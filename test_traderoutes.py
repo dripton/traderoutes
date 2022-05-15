@@ -716,6 +716,24 @@ def navigable_distances(tempdir, spin, dene, gvur, xboat_routes, neighbors):
     tr.navigable_dist_info2 = tr.populate_navigable_distances(2, "D")
     tr.navigable_dist_info3 = tr.populate_navigable_distances(3, "D")
 
+def non_inf_sum(matrix):
+    total = 0
+    for yy in range(len(matrix)):
+        for xx in range(len(matrix[0])):
+            if matrix[yy][xx] != inf:
+                total += matrix[yy][xx]
+    return total
+
+def test_dist_pred(spin, dene, gvur, neighbors, navigable_distances):
+    assert len(tr.sorted_worlds) == 1183
+    dist2 = tr.navigable_dist_info2.dist_matrix
+    pred2 = tr.navigable_dist_info2.predecessors
+    dist3 = tr.navigable_dist_info3.dist_matrix
+    pred3 = tr.navigable_dist_info3.predecessors
+    assert non_inf_sum(dist2) == 50636012
+    assert non_inf_sum(dist3) == 48576694
+    assert non_inf_sum(pred2) == -349998103
+    assert non_inf_sum(pred3) == 368454945
 
 def test_navigable_distance(spin, dene, gvur, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]
