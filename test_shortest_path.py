@@ -1,4 +1,6 @@
-from numpy import full, inf, zeros
+from math import inf
+
+from numpy import full, zeros
 from scipy.sparse.csgraph import shortest_path
 
 

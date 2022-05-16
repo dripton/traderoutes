@@ -1,12 +1,12 @@
 # Run with pytest (or python3 -m pytest)
 
+from math import inf
 import os
 import shutil
 import stat
 from sys import maxsize
 import tempfile
 
-from numpy import inf
 import pytest
 import traderoutes as tr
 
@@ -422,6 +422,7 @@ def test_distance_modifier_table():
     assert tr.distance_modifier_table(1000) == 6
     assert tr.distance_modifier_table(999999) == 6
     assert tr.distance_modifier_table(maxsize) == 6
+    assert tr.distance_modifier_table(inf) == 6
 
 
 def test_distance_modifier(spin, dene, gvur, neighbors, navigable_distances):
