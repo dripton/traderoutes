@@ -458,7 +458,7 @@ def test_distance_modifier(spin, dene, gvur, neighbors, navigable_distances):
     assert aramis.distance_modifier(vinorian) == 0
     assert collace.distance_modifier(salaam) == 3
     assert raweh.distance_modifier(salaam) == 3.5
-    assert aramis.distance_modifier(andor) == 6.5
+    assert aramis.distance_modifier(andor) == 6
 
 
 def test_btn(spin, dene, gvur, neighbors, navigable_distances):
@@ -547,8 +547,8 @@ def test_btn(spin, dene, gvur, neighbors, navigable_distances):
     assert vinorian.btn(nutema) == 6.5
     assert nutema.btn(margesi) == 5.5
     assert margesi.btn(saarinen) == 5.5
-    assert aramis.btn(andor) == 2
-    assert andor.btn(candory) == 1.5
+    assert aramis.btn(andor) == 2.5
+    assert andor.btn(candory) == 2.0
 
 
 def test_passenger_btn(spin, dene, gvur, neighbors, navigable_distances):
@@ -586,8 +586,8 @@ def test_passenger_btn(spin, dene, gvur, neighbors, navigable_distances):
     assert vinorian.passenger_btn(nutema) == 6.5
     assert nutema.passenger_btn(margesi) == 5.5
     assert margesi.passenger_btn(saarinen) == 5.5
-    assert aramis.passenger_btn(andor) == 2.5
-    assert andor.passenger_btn(candory) == 1.5
+    assert aramis.passenger_btn(andor) == 3.0
+    assert andor.passenger_btn(candory) == 2.0
 
 
 @pytest.fixture(scope="session")
@@ -716,6 +716,7 @@ def navigable_distances(tempdir, spin, dene, gvur, xboat_routes, neighbors):
     tr.navigable_dist_info2 = tr.populate_navigable_distances(2, "D")
     tr.navigable_dist_info3 = tr.populate_navigable_distances(3, "D")
 
+
 def non_inf_sum(matrix):
     total = 0
     for yy in range(len(matrix)):
@@ -723,6 +724,7 @@ def non_inf_sum(matrix):
             if matrix[yy][xx] != inf:
                 total += matrix[yy][xx]
     return total
+
 
 def test_dist_pred(spin, dene, gvur, neighbors, navigable_distances):
     assert len(tr.sorted_worlds) == 1183
@@ -734,6 +736,7 @@ def test_dist_pred(spin, dene, gvur, neighbors, navigable_distances):
     assert non_inf_sum(dist3) == 48576694
     assert non_inf_sum(pred2) == -349998103
     assert non_inf_sum(pred3) == 368454945
+
 
 def test_navigable_distance(spin, dene, gvur, neighbors, navigable_distances):
     aramis = spin.hex_to_world["3110"]

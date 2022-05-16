@@ -832,7 +832,7 @@ def generate_pdf(sector: Sector, output_dir: str) -> None:
 
 @cache
 def distance_modifier_table(distance: float) -> float:
-    table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, maxsize]
+    table = [1, 2, 5, 9, 19, 29, 59, 99, 199, 299, 599, 999, inf]
     index = bisect_left(table, distance)
     return index / 2
 
