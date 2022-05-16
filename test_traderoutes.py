@@ -1056,11 +1056,21 @@ def test_populate_trade_routes(spin, dene, gvur, trade_routes):
     assert len(aramis.intermediate_routes) == 4
     assert len(aramis.feeder_routes) == 9
     assert len(aramis.minor_routes) == 0
+    print(f"{aramis.major_routes=}")
+    print(f"{aramis.main_routes=}")
+    print(f"{aramis.intermediate_routes=}")
+    print(f"{aramis.feeder_routes=}")
+    print(f"{aramis.minor_routes=}")
     assert len(mora.major_routes) == 1
     assert len(mora.main_routes) == 8
     assert len(mora.intermediate_routes) == 5
     assert len(mora.feeder_routes) == 0
     assert len(mora.minor_routes) == 0
+    print(f"{mora.major_routes=}")
+    print(f"{mora.main_routes=}")
+    print(f"{mora.intermediate_routes=}")
+    print(f"{mora.feeder_routes=}")
+    print(f"{mora.minor_routes=}")
     assert len(jesedipere.major_routes) == 0
     assert len(jesedipere.main_routes) == 0
     assert len(jesedipere.intermediate_routes) == 0
@@ -1068,6 +1078,11 @@ def test_populate_trade_routes(spin, dene, gvur, trade_routes):
     assert len(jesedipere.minor_routes) == 2
     assert jesedipere.feeder_routes == {nasemin, junidy, rruthaekuksu}
     assert jesedipere.minor_routes == {rugbird, yebab}
+    print(f"{jesedipere.major_routes=}")
+    print(f"{jesedipere.main_routes=}")
+    print(f"{jesedipere.intermediate_routes=}")
+    print(f"{jesedipere.feeder_routes=}")
+    print(f"{jesedipere.minor_routes=}")
     assert len(rruthaekuksu.major_routes) == 0
     assert len(rruthaekuksu.main_routes) == 0
     assert len(rruthaekuksu.intermediate_routes) == 0
@@ -1079,3 +1094,8 @@ def test_populate_trade_routes(spin, dene, gvur, trade_routes):
         rugbird,
     }
     assert len(rruthaekuksu.minor_routes) == 0
+    print(f"{rruthaekuksu.major_routes=}")
+    print(f"{rruthaekuksu.main_routes=}")
+    print(f"{rruthaekuksu.intermediate_routes=}")
+    print(f"{rruthaekuksu.feeder_routes=}")
+    print(f"{rruthaekuksu.minor_routes=}")
