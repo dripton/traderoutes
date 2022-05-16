@@ -925,6 +925,8 @@ def test_navigable_path(spin, dene, gvur, neighbors, navigable_distances):
     forine = spin.hex_to_world["1533"]
     tarkine = spin.hex_to_world["1434"]
     talos = spin.hex_to_world["1436"]
+    feneteman = spin.hex_to_world["3104"]
+    yebab = spin.hex_to_world["3002"]
 
     assert aramis.navigable_path(aramis, 2) == [aramis]
     assert aramis.navigable_path(ldd, 2) == [aramis, ldd]
@@ -938,6 +940,14 @@ def test_navigable_path(spin, dene, gvur, neighbors, navigable_distances):
         nasemin,
         jesedipere,
         rruthaekuksu,
+        lablon,
+        corfu,
+    ]
+    assert aramis.navigable_path(corfu, 3) == [
+        aramis,
+        lewis,
+        feneteman,
+        yebab,
         lablon,
         corfu,
     ]
