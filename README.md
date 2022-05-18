@@ -4,6 +4,9 @@ Trader.
 https://github.com/makhidkarun/traveller_pyroute already exists, but I
 couldn't get it to work, so I'm writing my own.
 
+Note that I have ported this code to Rust.  The new version is at
+https://github.com/dripton/traderust  It's *much* faster, and also easier
+to install.  But I'll keep the Python version up in case anyone wants it.
 
 Run "python3 traderoutes.py -h" for help.
 
