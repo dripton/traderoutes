@@ -222,6 +222,7 @@ def populate_navigable_distances(
                 edges += 1
         for neighbor in world.xboat_routes:
             nd[ii][neighbor.index] = world.straight_line_distance(neighbor)
+            edges += 1
     worlds = len(sorted_worlds)
     log(f"shortest_paths {worlds=} {edges=}")
 
